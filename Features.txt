@@ -1,0 +1,23 @@
+Features:
+1. EXP calculation is round((21 + pow(i,2.12)) / 2).
+2. The game can contain multiple events running in parallel, but it must be different type of event because SIF limitation.
+3. It also can contain multiple scout boxes running in parallel. Like there's "Printemps" box while there's "Second-Year" and "Popular Selection" scouting running.
+4. And even, it can contain multiple blue ticket scouts in parallel also.
+5. You can add as many login bonus as you want. Not restricted
+6. The login bonus can contain anything like loveca, gold, fp, and even member. Example: You can give 2 Cyber Honoka in Honoka's birthday instead of 5 loveca.
+7. Live Show! notes can be modified under `data/notes` folder.
+8. The WebView won't consume much bandwidh. It's designed to be like SIF JP webview while the webview base is from SIF EN
+9. Secretbox webview link details will be automatically generated (and cached if necessary) by hashing it.
+
+Limitations:
+1. You'll always receive +5 FP (or +10 if it's your friend) if you use someone as your guest.
+2. The secretbox can't distingush between normal card and event card. So it has same rate.
+3. The x4 token event song will always appear.
+4. There's no gold bonus in token event.
+
+Differences between original SIF EN server:
+1. You can use R support to practice promo UR
+2. Skill level up internally uses EXP instead of random chance (increased complexity in unit/merge.php)
+3. Bond page in profile follows SIF JP v4.0 behaviour instead.
+4. Promo cards (UR or SR) will gives Pink seal. Support cards will give seals based on their rarity like normal card.
+5. You can use scouting ticket even in custom pickup box (like in Printemps box).

@@ -1,0 +1,73 @@
+/*
+SIF Private server design
+MySQL username & password: "school_idol". Only allow connection from localhost. Only necessary if MySQL is used.
+
+The design allows easy modification while retaining good security.
+It supports both MySQL and SQLite as the database driver. However, MySQL is preferred because it's faster.
+
+The private server is tested in Microsoft IIS 8.5 and PHP built-in web server with PHP7. The minimum version of PHP needed to run this is
+PHP 7.0.0, and SQLite v3.7.0 or later (if using SQLite as database backend).
+
+If you don't have web server (or simply don't want to install one), you can simply using PHP built-in web server: php -S 0.0.0.0:80 -t <path of this server>.
+Also if you don't have MySQL, you can use SQLite3 as database backend instead, with less speed.
+
+Everything is output-buffered. Array returned in handler (module/action) is used as the actual response data, while using "echo" will redirect it to "message"
+field in the response data later on.
+
+Since we don't know the XMS private key, you need SIF with XMS check disabled to access the server.
+The XMS will be base64(repeat("\0", 128));
+
+For the authentication key, the authentication key can be anything as long as it's random (hash, UUID, cryptographically secure random strings, ...)
+After doing login procedure, it's necessary to check the link between the userkey, password, and the token. If it doesn't match, return 403 Forbidden and return same message as above, except with empty JSON string.
+If the user inactive for more than 3 days, kick it out from the server!
+
+This server supports locked account system a.k.a banned. If the user is banned, return error code 423 with {"message":"<additional message or empty>"}
+
+All module and action is located in "modules" folder which contains folder for modules and then in that folder contains PHP script to handle the "action".
+Call to "/api" must be handled separately, but keep loading the action from there.
+
+Most modules and action are commented, so you may want to check it out.
+
+Supports to download files will be added later (needs more inspection). For that, place the files want to be downloaded in the "static" folder.
+
+There's also support for serial codes, but since serial code feature was removed from the game, you need to input it from browser.
+You can open http://<your server location>/serialcode.php to input your serial code.
+The UI is very basic without any CSS styles, but you can modify it to make it better.
+
+There's also webview support, like announce page, but this is still work in progess and more need to work on.
+
+To trigger "maintenance", create a file named "Maintenance" or "Maintenance.txt" (the content doesn't matter) in same folder as "main.php".
+
+List of item IDs:
+1000: Item. For item like Scouting Ticket.
+1001: Club Members. the "card_num" specify the card ID to be given (not Card ID in Album).
+3000: Gold.
+3001: Loveca.
+3002: Friend Points.
+3004: EXP.
+3005: Member Slot.
+3006: Sticker. "card_num" specify which sticker (unused?)
+3007: Friend Slot.
+5000: Song. "card_num" specify live ID. (amount always 1)
+5100: Titles. "card_num" specify badge ID. (amount always 1)
+5200: Wallpapers. "card_num" specify background ID. (amount always 1)
+5300: Main Story. Unknown
+5400: Tap sound. Possibly unused.
+
+List of notice filter ID:
+1: Main Story
+2: Side Story
+3: Club Members
+4: Live Shows
+5: Events
+6: Friend Requests
+
+When referring to live_id, it refers to the live_difficulty_id, not live_setting_id.
+
+Now the SQL structure.
+
+username and password: "school_idol" (without quotes) permissions only in "school_idol" database (create the database if necessary).
+The script uses mostly prepared statement to prevent SQL injection.
+
+Now to initialize your private server environment, the script will execute all statements in data/initialize_environment.sql
+*/

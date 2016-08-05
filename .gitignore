@@ -1,0 +1,12 @@
+/*.db*
+*.bat
+*.html
+*.so
+/*.sql
+/data
+!/data/*.sql
+!/data/*.db_
+.sqlite3_initialized
+my.php
+web.config
+.htaccess
