@@ -47,7 +47,7 @@ return [
 			"paid_sns_coin" => $user_info[5],										// paid_loveca
 			"free_sns_coin" => $user_info[6],										// free_loveca
 			"social_point" => $user_info[7],										// friend_point
-			"unix_max" => $user_info[8],											// max_unit
+			"unit_max" => $user_info[8],											// max_unit
 			"energy_max" => $user_info[9],											// max_lp
 			"energy_full_time" => to_datetime($user_info[10]),						// full_lp_recharge
 			"energy_full_need_time" => $lp_time_charge,								// full_lp_recharge - time()

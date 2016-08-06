@@ -167,20 +167,62 @@ foreach(live_get_current_daily() as $v)
 }
 
 // Event live
-foreach($DATABASE->execute_query('SELECT easy_song_list, normal_song_list, hard_song_list, expert_song_list FROM `event_list` WHERE token_image IS NOT NULL') as $ev)
+$marathon_db = new SQLite3Database('data/event/marathon.db_');
+foreach($DATABASE->execute_query("SELECT easy_song_list, normal_song_list, hard_song_list, expert_song_list FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_end > $UNIX_TIMESTAMP") as $ev)
 {
-	foreach($ev as $live)
+	foreach($ev as $lives)
 	{
-		$live_data = live_get_info($USER_ID, $v);
-		
-		$event_live[] = [
-			'live_difficulty_id' => $v,
-			'status' => $live_data['clear'] > 0 ? 2 : 1,
-			'hi_score' => $live_data['score'],
-			'hi_combo_cnt' => $live_data['combo'],
-			'clear_cnt' => $live_data['clear'],
-			'achieved_goal_id_list' => [] 				// TODO
-		];
+		foreach(explode(',', $lives) as $live)
+		{
+			$live_data = live_get_info($USER_ID, $live);
+			$lsid = $marathon_db->execute_query("SELECT live_setting_id FROM `event_marathon_live_m` WHERE live_difficulty_id = $live")[0][0];
+			$sc_clears = $live_db->execute_query("SELECT c_rank_score, b_rank_score, a_rank_score, s_rank_score, 
+				c_rank_combo, b_rank_combo, a_rank_combo, s_rank_combo FROM `live_setting_m` WHERE live_setting_id = $lsid")[0];
+			$cleared = [];
+			
+			/* Score clear check */
+			{
+				$goal_clears = $live_db->execute_query("SELECT live_goal_reward_id FROM `live_goal_reward_m` WHERE live_difficulty_id = $v AND live_goal_type = 1 ORDER BY rank DESC");
+				
+				foreach($goal_clears as $i => $id)
+				{
+					if($live_data['score'] >= $sc_clears[$i])
+						$cleared[] = $id;
+				}
+			}
+			
+			/* Combo clear check */
+			{
+				$goal_clears = $live_db->execute_query("SELECT live_goal_reward_id FROM `live_goal_reward_m` WHERE live_difficulty_id = $v AND live_goal_type = 2 ORDER BY rank DESC");
+				
+				foreach($goal_clears as $i => $id)
+				{
+					if($live_data['combo'] >= $sc_clears[$i + 4])
+						$cleared[] = $id;
+				}
+			}
+			
+			/* "Clear times" clear check */
+			{
+				$clears = $marathon_db->execute_query("SELECT c_rank_complete, b_rank_complete, a_rank_complete, s_rank_complete FROM `event_marathon_live_m` WHERE live_difficulty_id == $live")[0];
+				$goal_clears = $live_db->execute_query("SELECT live_goal_reward_id FROM `live_goal_reward_m` WHERE live_difficulty_id = $live AND live_goal_type = 3 ORDER BY rank DESC");
+				
+				foreach($goal_clears as $i => $id)
+				{
+					if($live_data['clear'] >= $clears[$i])
+						$cleared[] = $id;
+				}
+			}
+			
+			$event_live[] = [
+				'live_difficulty_id' => intval($live),
+				'status' => $live_data['clear'] > 0 ? 2 : 1,
+				'hi_score' => $live_data['score'],
+				'hi_combo_cnt' => $live_data['combo'],
+				'clear_cnt' => $live_data['clear'],
+				'achieved_goal_id_list' => []
+			];
+		}
 	}
 }
 

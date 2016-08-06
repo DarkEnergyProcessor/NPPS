@@ -1,52 +1,72 @@
 <?php
 $live_db = new SQLite3Database('data/live.db_');
+$event_common_db = new SQLite3Database('data/event/event_common.db_');
 $event_list = [];
 $live_time = [];
 
-$get_stage_level = function(int $live_id, SQLite3Database $live_db): int
+$event_common_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS marathon');
+
+$get_stage_level = function(int $live_id, SQLite3Database $live_db, SQLite3Database $event_common_db = NULL): int
 {
 	$stage_level = $live_db->execute_query("SELECT stage_level FROM `live_setting_m` WHERE live_setting_id = (SELECT live_setting_id FROM `special_live_m` WHERE live_difficulty_id = $live_id)");
 	
 	if(count($stage_level) == 0)
-		$stage_level = $live_db->execute_query("SELECT stage_level FROM `live_setting_m` WHERE live_setting_id = (SELECT live_setting_id FROM `normal_live_m` WHERE live_difficulty_id = $live_id)")[0][0];
+	{
+		$stage_level = $live_db->execute_query("SELECT stage_level FROM `live_setting_m` WHERE live_setting_id = (SELECT live_setting_id FROM `normal_live_m` WHERE live_difficulty_id = $live_id)");
+		
+		if(count($stage_level) == 0)
+			if($event_common_db != NULL)
+			{
+				$lsid = $event_common_db->execute_query("SELECT live_setting_id FROM `event_marathon_live_m` WHERE live_difficulty_id = $live_id")[0][0];
+				
+				return $live_db->execute_query("SELECT stage_level FROM `live_setting_m` WHERE live_setting_id = $lsid")[0][0];
+			}
+			else
+				return 0;
+		else
+			return $stage_level[0][0];
+	}
 	else
-		$stage_level = $stage_level[0][0];
+		return $stage_level[0][0];
 	
-	return $stage_level;
+	return 0;
 };
 
 // Event songs.
 foreach($DATABASE->execute_query("SELECT * FROM `event_list` WHERE event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP") as $ev)
 {
+	$event_info = $event_common_db->execute_query("SELECT event_category_id, name, banner_asset_name, banner_se_asset_name, result_banner_asset_name FROM `event_m` WHERE event_id = {$ev['event_id']}")[0];
 	$event_list[] = [
-		'event_id' => $ev[0],
-		'event_category_id' => $ev[5] == 1 ? 3 : ($ev[8] != NULL ? 2 : 1),
-		'name' => $ev[4],
-		'open_date' => to_datetime($ev[1]),
-		'start_date' => to_datetime($ev[1] + 1),
-		'end_date' => to_datetime($ev[2]),
-		'close_date' => to_datetime($ev[3]),
-		'banner_asset_name' => $ev[6],
-		'banner_se_asset_name' => substr($ev[6], 0, strpos($ev[6], '.')).'se.png',
-		'result_banner_asset_name' => substr($ev[6], 0, strpos($ev[6], '.')).'_re.png',
+		'event_id' => $ev['event_id'],
+		'event_category_id' => $event_info[0],
+		'name' => $event_info[1],
+		'open_date' => to_datetime($ev['event_start']),
+		'start_date' => to_datetime($ev['event_start'] + 1),
+		'end_date' => to_datetime($ev['event_end']),
+		'close_date' => to_datetime($ev['event_close']),
+		'banner_asset_name' => $event_info[2],
+		'banner_se_asset_name' => $event_info[3],
+		'result_banner_asset_name' => $event_info[4],
 		'description' => 'nil'
 	];
 	
-	if($ev[8] != NULL)
+	if($ev['token_image'] != NULL)
 	{
-		for($i = 10; $i <= 13; $i++)
-			if($ev[$i])
+		/* Token event, get it's live list */
+		foreach(['easy_song_list','normal_song_list','hard_song_list','expert_song_list'] as $i)
+			if($ev[$i] && strlen($ev[$i]) > 0)
 				foreach(explode(',', $ev[$i]) as $live_id)
 				{
-					$stage_level = $get_stage_level($live_id, $live_db);
+					$stage_level = $get_stage_level($live_id, $live_db, $event_common_db);
+					$event_song_info = $event_common_db->execute_query("SELECT special_setting, random_flag FROM `event_marathon_live_m` WHERE live_difficulty_id = $live_id")[0];
 					
 					$live_time[] = [
 						'live_difficulty_id' => intval($live_id),
-						'start_date' => to_datetime($ev[1]),
-						'end_date' => to_datetime($ev[2]),
-						'is_random' => false,				// TODO
+						'start_date' => to_datetime($ev['event_start']),
+						'end_date' => to_datetime($ev['event_end']),
+						'is_random' => !!$event_song_info[1],
 						'dangerous' => $stage_level >= 11,
-						'use_quad_point' => false			// TODO
+						'use_quad_point' => !!$event_song_info[0]
 					];
 				}
 	}

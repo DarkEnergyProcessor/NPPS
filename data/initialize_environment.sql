@@ -32,16 +32,11 @@ CREATE TABLE `coupon_secretbox_list` (				-- With scouting coupon
 	ur_chance DECIMAL(6,3) NOT NULL DEFAULT 20.000	-- The chance for UR to appear. 20% by default
 );
 CREATE TABLE `event_list` (
-	event_id INTEGER PRIMARY KEY AUTO_INCREMENT,		-- The event ID
+	event_id INTEGER PRIMARY KEY,						-- The event ID from event_common.db_
 	event_start INTEGER NOT NULL DEFAULT 0,				-- Unix timestamp when the event start
-	event_end INTEGER NOT NULL,							-- When the event is end.
-	event_close INTEGER NOT NULL,						-- When the event page is closed
-	event_name TEXT DEFAULT NULL,						-- The event name (default to 'Unknown')
-	is_medfes BOOL NOT NULL DEFAULT 0,					-- Is it MedFes?
-	banner_preview TEXT NOT NULL,						-- The banner preview image in-game
-	banner_big TEXT NOT NULL,							-- The big banner image in-game
+	event_end INTEGER NOT NULL DEFAULT 2147483647,		-- When the event is end.
+	event_close INTEGER NOT NULL DEFAULT 2147483647,	-- When the event page is closed.
 	token_image TEXT,									-- The token note image or NULL if it's not token event. Format: <token name>:<token image path>
-	token_multipler DECIMAL(5,2) NOT NULL DEFAULT 1.00,	-- The received token multipler. If you want to make bonus
 	easy_song_list TEXT,								-- The easy song list. For token, it's the event song. For SM/MedFes, the song that available in event. Comma separated
 	normal_song_list TEXT,								-- Same as above, for normal
 	hard_song_list TEXT,								-- Same as above, for hard
@@ -53,10 +48,7 @@ CREATE TABLE `event_list` (
 	expert_lp INTEGER NOT NULL DEFAULT 25,				-- Same as above (expert)
 	technical_lp INTEGER NOT NULL DEFAULT 25,			-- Same as above (technical)
 	event_ranking_table TEXT NOT NULL,					-- The event player ranking list table.
-	event_song_table TEXT DEFAULT NULL,					-- The event song ranking list table for token event or NULL
-	event_reward_points TEXT NOT NULL,					-- Event reward (points)
-	event_reward_tier TEXT NOT NULL,					-- Event reward on reaching specific tier.
-	event_reward_song TEXT DEFAULT NULL					-- Event reward from event song ranking (token only)
+	event_song_table TEXT DEFAULT NULL					-- The event song ranking list table for token event or NULL
 );
 CREATE TABLE `logged_in` (
 	login_key TEXT,											-- The associated login key or NULL if stil in "authkey"
@@ -270,24 +262,6 @@ CREATE TABLE `event_player_ranking_$event_id` (
 CREATE TABLE `event_song_ranking_{$event_id}_$live_id` (	-- Token event only
 	user_id INTEGER NOT NULL PRIMARY KEY,					-- Player user ID
 	high_score INTEGER NOT NULL								-- Highest score
-);
-CREATE TABLE `event_reward_points_$event_id` (
-	target_point INTEGER NOT NULL,				-- Minimum point to get this
-	item_id INTEGER NOT NULL,					-- Item ID to get
-	extended_id INTEGER,						-- Extended item ID (like card ID)
-	amount INTEGER NOT NULL DEFAULT 1			-- Item amount
-);
-CREATE TABLE `event_tier_$event_id` (
-	position INTEGER NOT NULL,					-- Top `position` to get this reward. Can be specificed more than once for multiple rewards.
-	item_id INTEGER NOT NULL,					-- Item ID to get
-	extended_id INTEGER,						-- Extended item ID (like card ID)
-	amount INTEGER NOT NULL DEFAULT 1			-- Item amount
-);
-CREATE TABLE `event_song_reward_$event_id` (	-- Token event only
-	position INTEGER NOT NULL,					-- Top `position` to get this reward. Can be specificed more than once for multiple rewards.
-	item_id INTEGER NOT NULL,					-- Item ID to get
-	extended_id INTEGER,						-- Extended item ID (like card ID)
-	amount INTEGER NOT NULL DEFAULT 1			-- Item amount
 );
 */
 /*
