@@ -15,4 +15,10 @@ It doesn't use any framework so it's lightweight. While it's lightweight, it wil
 
 * For Windows: Windows 7 SP1 or Windows Server 2008 R2 SP1 (because you can't run PHP 7 in the earlier Windows version)
 
-* For Ubuntu: Ubuntu 16.04, but using 14.04 is possible with [Ondrej Sur� PPA](https://launchpad.net/~ondrej/+archive/ubuntu/php) to install PHP 7 and it's modules.
+* For Ubuntu: Ubuntu 16.04, but using 14.04 is possible with [Ondřej Surý PPA](https://launchpad.net/~ondrej/+archive/ubuntu/php) to install PHP 7 and it's modules.
+
+###Some Notes
+
+* You don't need to do special preparation. Just clone, create web server with document root set to this directory, and visit.
+
+* Hosting it under Linux is recommended and will gain 2x more speed than hosting it under Windows.
