@@ -1,0 +1,21 @@
+NPPS Supports DownLoadable Content (DLC) for Story and Songs. It requires SifEmu library to be present which depends on cURL and working SIF account in production server.
+
+The DLC data is located in `dlc` folder. The structure of the folder is:
+
+-dlc/
++-sifemu.php
++-data/
++-cache/
+
+dlc/data contains files which consist of <type>_<id>.txt. The contents of the file will be explained below.
+dlc/cache contains downloaded data from production server.
+
+<type>_<id>.txt file format is JSON which contains all files for that package. Example:
+[
+	"assets/image/hello.texb",
+	"assets/image/hello.png.imag",
+	"assets/sound/my.mp3"
+]
+
+For audio, MP3 extension is always used, but it will check for OGG for Android OS.
+
