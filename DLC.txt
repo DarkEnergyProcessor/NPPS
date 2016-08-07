@@ -7,15 +7,5 @@ The DLC data is located in `dlc` folder. The structure of the folder is:
 +-data/
 +-cache/
 
-dlc/data contains files which consist of <type>_<id>.txt. The contents of the file will be explained below.
-dlc/cache contains downloaded data from production server.
-
-<type>_<id>.txt file format is JSON which contains all files for that package. Example:
-[
-	"assets/image/hello.texb",
-	"assets/image/hello.png.imag",
-	"assets/sound/my.mp3"
-]
-
-For audio, MP3 extension is always used, but it will check for OGG for Android OS.
-
+dlc/data contains files which consist of <type>_<id>_<os>.txt filename. The contents is a JSON array for the corresponding download_additional_id.
+dlc/cache contains downloaded data from production server. The filename is the hash of the file contents.
