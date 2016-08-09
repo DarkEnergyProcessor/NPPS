@@ -2,7 +2,7 @@
 require('dlc/sifemu.php');
 
 /* Blocking call */
-function gain_sifemu_lock(): resource
+function gain_sifemu_lock()
 {
 	$f = false;
 	
@@ -12,7 +12,7 @@ function gain_sifemu_lock(): resource
 	return $f;
 }
 
-function release_sifemu_lock(resource $f)
+function release_sifemu_lock($f)
 {
 	fclose($f);
 }
@@ -67,7 +67,7 @@ if(file_exists("dlc/$filename_list") == false)
 	
 	foreach($dl_links as $x)
 	{
-		file_put_contents($tempfile, fopen($x, 'rb'));
+		file_put_contents($tempfile, fopen($x['url'], 'rb'));
 		
 		$file_sha256 = hash_file('sha256', $tempfile);
 		$json_hashes[] = "$file_sha256.zip";

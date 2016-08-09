@@ -46,7 +46,7 @@ class SifEmu
 			return $inst;
 		}
 		
-		$inst->authkey();
+		$inst->login_authkey();
 		$inst->login_login();
 		
 		return $inst;
@@ -159,7 +159,7 @@ class SifEmu
 		$request_data['module'] = $module_action[0];
 		$request_data['action'] = $module_action[1];
 		
-		$data = $this->request_lowlevel($endpoint, $request_data);
+		$data = $this->request_lowlevel($endpoint, json_encode($request_data));
 		
 		if($data[1] != 200)
 		{
@@ -195,7 +195,8 @@ class SifEmu
 		fwrite($x, json_encode([
 			'cmdnum' => $this->cmdnum,
 			'nonce' => $this->nonce,
-			
+			'token' => $this->token,
+			'user_id' => $this->user_id
 		]));
 		fclose($x);
 	}
@@ -236,6 +237,7 @@ class SifEmu
 			'package_id' => $package_id,
 			'type' => strval($type),
 			'region' => '392',
+			'client_version' => self::$CLIENT_VERSION
 		];
 		
 		return $this->request_common('download/additional', $request_data);
