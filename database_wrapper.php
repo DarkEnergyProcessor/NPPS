@@ -359,7 +359,7 @@ class SQLite3Database extends DatabaseWrapper
 						$out = [];
 						
 						while($row = $result->fetchArray(SQLITE3_BOTH))
-							array_push($out, $row);
+							$out[] = $row;
 						
 						return $out;
 					}
@@ -383,7 +383,7 @@ class SQLite3Database extends DatabaseWrapper
 			$out = [];
 			
 			while($row = $result->fetchArray(SQLITE3_BOTH))
-				array_push($out, $row);
+				$out[] = $row;
 			
 			return $out;
 		}

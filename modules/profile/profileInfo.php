@@ -32,7 +32,7 @@ $is_friend = false;
 	$is_idolized = $unit_db->execute_query("SELECT after_level_max FROM `unit_m` WHERE unit_id = {$unit[1]}")[0][0] == $unit[5];
 	
 	$unit_out = [
-		'unit_owning_user_id' => token_use_pseudo_unit_own_id($TOKEN)[0],
+		'unit_owning_user_id' => token_use_pseudo_unit_own_id($TOKEN),
 		'unit_id' => $unit[1],
 		'exp' => $unit[2],
 		'next_exp' => $unit[3],

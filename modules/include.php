@@ -25,11 +25,15 @@ function strpos_array(string $haystack, array $needles) {
 
 function to_datetime(int $timestamp): string
 {
+	if($timestamp < 86400) $timestamp += 86400;
+	
 	return date('Y-m-d H:i:s', $timestamp);
 }
 
 function to_utcdatetime(int $timestamp): string
 {
+	if($timestamp < 86400) $timestamp += 86400;
+	
 	return gmdate('Y-m-d H:i:s', $timestamp);
 }
 
@@ -879,17 +883,47 @@ function user_get_gauge(int $user_id): int
 	return count($temp) == 0 ? 0 : $temp[0][0] * 10;
 }
 
-function token_use_pseudo_unit_own_id(string $token, int $amount = 1): array
+/* returns cycle how many times it already beyond 100 */
+function user_increase_gauge(int $user_id, int $amount = 1): int
+{
+	global $DATABASE;
+	
+	$temp = user_get_gauge($user_id) + $amount;
+	$cycle = 0;
+	
+	for(; $temp >= 10; $temp -= 10)
+		$cycle++;
+	
+	$DATABASE->execute_query('REPLACE INTO `secretbox_gauge` VALUES(?, ?)', 'ii', $user_id, $temp);
+	return $cycle;
+}
+
+function token_use_pseudo_unit_own_id(string $token): int
 {
 	global $DATABASE;
 	
 	$pseudo_curnum = $DATABASE->execute_query('SELECT pseudo_unit_own_id FROM `logged_in` WHERE token = ?', 's', $token)[0][0];
-	$pseudo_out = [];
-	
-	for($i = 1; $i <= $amount; $i++)
-		$pseudo_out[] = $pseudo_curnum - $i;
-	
-	$DATABASE->execute_query("UPDATE `logged_in` SET pseudo_unit_own_id = pseudo_unit_own_id - $amount WHERE token = ?", 's', $token);
-	return $pseudo_out;
+	$DATABASE->execute_query('UPDATE `logged_in` SET pseudo_unit_own_id = pseudo_unit_own_id - 1 WHERE token = ?', 's', $token);
+	return $pseudo_curnum;
 }
-?>
+
+/* returns true if success, false if not enough loveca */
+function user_sub_loveca(int $user_id, int $amount): bool
+{
+	$DATABASE = $GLOBALS['DATABASE'];
+	
+	$loveca = $DATABASE->execute_query("SELECT paid_loveca, free_loveca FROM `users` WHERE user_id = $user_id")[0];
+	
+	if($loveca['paid_loveca'] >= $amount)
+		$loveca['paid_loveca'] -= $amount;
+	else
+		if($loveca['free_loveca'] + $loveca['paid_loveca'] >= $amount)
+		{
+			$loveca['free_loveca'] -= $amount - $loveca['paid_loveca'];
+			$loveca['paid_loveca'] = 0;
+		}
+		else
+			return false;
+	
+	return !!$DATABASE->execute_query('UPDATE `users` SET paid_loveca = ?, free_loveca = ? WHERE user_id = ?', 'iii', $loveca['paid_loveca'], $loveca['free_loveca'], $user_id);
+}

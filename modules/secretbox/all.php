@@ -90,7 +90,7 @@ $is_unit_max = false;
 				'is_multi' => $infos[0] == 0,
 				'multi_count' => 11,
 				'is_pay_cost' => $infos[0] > 0 ?: $infos[2] >= $cost_hon['amount'],
-				'is_pay_multi_cost' => $infos[0] > 0 ? false : $infos[2] >= $cost_hon['amount'] * 11,
+				'is_pay_multi_cost' => $infos[0] > 0 ? false : $infos[2] >= $cost_hon['amount'] * 10,
 				'cost' => $cost_hon
 			]
 		],

@@ -64,6 +64,14 @@ $lp_info = [];
 	$lp_info['overflow'] = $total_lp;
 }
 
+// Get first marathon event
+$active_event = $DATABASE->execute_query("SELECT event_id FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_end > $UNIX_TIMESTAMP ORDER BY event_start LIMIT 1");
+
+if(count($active_event) > 0)
+	$active_event = $active_event[0][0];
+else
+	$active_event = NULL;
+
 // TODO: Add support for MedFes live/play
 return [
 	[
@@ -104,8 +112,8 @@ return [
 				'notes_list' => $live_notes
 			]
 		],
-		'is_marathon_event' => false,		// TODO
-		'marathon_event_id' => NULL,		// TODO
+		'is_marathon_event' => $active_event !== NULL,
+		'marathon_event_id' => $active_event,
 		'energy_full_time' => $lp_info['time'],
 		'over_max_energy' => $lp_info['overflow']
 	],

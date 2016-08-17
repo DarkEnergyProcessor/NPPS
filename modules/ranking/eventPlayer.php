@@ -22,7 +22,7 @@ if(count($ranking_table) == 0)
 
 return [
 	[
-		'error_code' => 0,
+		'error_code' => 1602,
 	],
 	600
 ];

@@ -53,7 +53,7 @@ foreach(
 		'live_difficulty_id' => $v[0],
 		'status' => $v[4] > 0 ? 2 : 1,
 		'hi_score' => $v[2],
-		'hi_combo_cnt' => $v[3],
+		'hi_combo_count' => $v[3],
 		'clear_cnt' => $v[4],
 		'achieved_goal_id_list' => $cleared
 	];
@@ -107,7 +107,7 @@ foreach($DATABASE->execute_query("SELECT live_id FROM `b_side_schedule` WHERE en
 		'live_difficulty_id' => $v,
 		'status' => $live_data['clear'] > 0 ? 2 : 1,
 		'hi_score' => $live_data['score'],
-		'hi_combo_cnt' => $live_data['combo'],
+		'hi_combo_count' => $live_data['combo'],
 		'clear_cnt' => $live_data['clear'],
 		'achieved_goal_id_list' => $cleared
 	];
@@ -160,7 +160,7 @@ foreach(live_get_current_daily() as $v)
 		'live_difficulty_id' => $v,
 		'status' => $live_data['clear'] > 0 ? 2 : 1,
 		'hi_score' => $live_data['score'],
-		'hi_combo_cnt' => $live_data['combo'],
+		'hi_combo_count' => $live_data['combo'],
 		'clear_cnt' => $live_data['clear'],
 		'achieved_goal_id_list' => $cleared
 	];
@@ -170,8 +170,10 @@ foreach(live_get_current_daily() as $v)
 $marathon_db = new SQLite3Database('data/event/marathon.db_');
 foreach($DATABASE->execute_query("SELECT easy_song_list, normal_song_list, hard_song_list, expert_song_list FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_end > $UNIX_TIMESTAMP") as $ev)
 {
-	foreach($ev as $lives)
+	foreach($ev as $key => $lives)
 	{
+		if(is_integer($key) == false) continue;
+		
 		foreach(explode(',', $lives) as $live)
 		{
 			$live_data = live_get_info($USER_ID, $live);
@@ -218,7 +220,7 @@ foreach($DATABASE->execute_query("SELECT easy_song_list, normal_song_list, hard_
 				'live_difficulty_id' => intval($live),
 				'status' => $live_data['clear'] > 0 ? 2 : 1,
 				'hi_score' => $live_data['score'],
-				'hi_combo_cnt' => $live_data['combo'],
+				'hi_combo_count' => $live_data['combo'],
 				'clear_cnt' => $live_data['clear'],
 				'achieved_goal_id_list' => []
 			];
