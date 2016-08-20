@@ -9,7 +9,6 @@ if(preg_match('/\D/', $secretbox_id) == 1 || preg_match('/\D/', $cost) == 1)
 	return false;
 }
 
-
 $common_unrange = function(array $m): string {
     return implode(',', range($m[1], $m[2]));
 };

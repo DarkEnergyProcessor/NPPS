@@ -874,13 +874,13 @@ function user_get_free_gacha_timestamp(int $user_id): int
 	return count($temp) == 0 ? 0 : $temp[0][0];
 }
 
-function user_get_gauge(int $user_id): int
+function user_get_gauge(int $user_id, bool $unmul = false): int
 {
 	global $DATABASE;
 	
 	$temp = $DATABASE->execute_query("SELECT gauge FROM `secretbox_gauge` WHERE user_id = $user_id");
 	
-	return count($temp) == 0 ? 0 : $temp[0][0] * 10;
+	return count($temp) == 0 ? 0 : ($unmul ? $temp[0][0] : $temp[0][0] * 10);
 }
 
 /* returns cycle how many times it already beyond 100 */
@@ -888,7 +888,7 @@ function user_increase_gauge(int $user_id, int $amount = 1): int
 {
 	global $DATABASE;
 	
-	$temp = user_get_gauge($user_id) + $amount;
+	$temp = user_get_gauge($user_id, true) + $amount;
 	$cycle = 0;
 	
 	for(; $temp >= 10; $temp -= 10)

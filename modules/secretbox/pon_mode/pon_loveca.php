@@ -7,6 +7,9 @@ if($before_user_info[0]['user']['sns_coin'] < $scout_info['loveca_single_cost'])
 	echo 'Not enough loveca!';
 	return false;
 }
+
+if($secretbox_id == 0)
+	$scout_info['name'] = 'Scout Regular Student(s)';
 	
 // Calculate gauge info
 {
@@ -36,7 +39,7 @@ $temp_cost = [
 ];
 $secretbox_info = [
 	'secret_box_id' => $secretbox_id,
-	'name' => $scout_info['name'],
+	'name' => $scout_info['name'] ?? 'nil',
 	'title_asset' => NULL,
 	'description' => $scout_info['description'],
 	'start_date' => to_datetime(0),
@@ -44,8 +47,8 @@ $secretbox_info = [
 	'add_gauge' => 10,
 	'is_multi' => true,
 	'multi_count' => 11,
-	'is_pay_cost' => ($before_user_info[1][1] - $scout_info['loveca_single_cost']) >= $scout_info['loveca_single_cost'],
-	'is_pay_multi_cost' => ($before_user_info[1][1] - $scout_info['loveca_single_cost'] * 10) >= $scout_info['loveca_single_cost'] * 10,
+	'is_pay_cost' => ($before_user_info[0]['user']['sns_coin'] - $scout_info['loveca_single_cost']) >= $scout_info['loveca_single_cost'],
+	'is_pay_multi_cost' => ($before_user_info[0]['user']['sns_coin'] - $scout_info['loveca_single_cost'] * 10) >= $scout_info['loveca_single_cost'] * 10,
 	'cost' => $temp_cost,
 	'next_cost' => $temp_cost
 ];
