@@ -12,7 +12,9 @@ $connected_user_id = user_id_from_credentials($REQUEST_DATA["login_key"], $REQUE
 if($connected_user_id == 0)
 	/* No user ID found or login incorrect */
 	return [
-		["error_code" => 407],
+		[
+			'error_code' => ERROR_CODE_LOGIN_INVALID
+		],
 		600
 	];
 else if($connected_user_id < 0)
