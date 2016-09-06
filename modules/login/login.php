@@ -25,6 +25,8 @@ else if($connected_user_id < 0)
 	return false;
 }
 
+$DATABASE->execute_query('BEGIN');
+
 /* Create new token again */
 $newtoken = token_generate();
 $USER_ID = $connected_user_id;
@@ -32,11 +34,16 @@ $USER_ID = $connected_user_id;
 /* Delete previous token */
 $DATABASE->execute_query('DELETE FROM `logged_in` WHERE login_key = ? AND login_pwd = ?', 'ss', $REQUEST_DATA["login_key"], $REQUEST_DATA["login_passwd"]);
 
+/* Delete all WIP lives */
+$DATABASE->execute_query("DELETE FROM `wip_live` WHERE user_id = $connected_user_id");
+
 /* Update */
 $DATABASE->execute_query('UPDATE `logged_in` SET login_key = ?, login_pwd = ?, token = ? WHERE token = ?', 'ssss', 
 	$REQUEST_DATA["login_key"], $REQUEST_DATA["login_passwd"], $newtoken, $TOKEN);
 
 $TOKEN = $newtoken;
+
+$DATABASE->execute_query('COMMIT');
 
 /* Out. The JSON string will be in-order atleast in PHP7 */
 return [

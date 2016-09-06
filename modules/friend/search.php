@@ -10,7 +10,7 @@ if(count($result) == 0)
 	];
 
 $result = $result[0];
-$user_info = user_get_basic_info($result[0], new SQLite3Database('data/unit.db_'));
+$user_info = user_get_basic_info($result[0]);
 $is_friend = false;
 
 if($result[0] != $USER_ID)

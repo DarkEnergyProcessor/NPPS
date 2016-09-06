@@ -148,8 +148,8 @@ CREATE TABLE `wip_live` (
 	deck_num INTEGER NOT NULL,			-- Used deck in this live show
 	event_id INTEGER DEFAULT NULL,		-- Event ID which starts this live show (like scorematch, medfes)
 	guest_user_id INTEGER DEFAULT NULL,	-- Who is the guest? (non-event only)
-	unique_id TEXT NOT NULL,			-- The live unique ID
-	seed TEXT DEFAULT NULL				-- The seed if the notes are random or NULL if it doesn't
+	live_data TEXT DEFAULT NULL			-- Live-specific related data
+	started INTEGER NOT NULL,			-- Used to prevent people from completing live too fast
 );
 CREATE TABLE `free_gacha_tracking` (
 	user_id INTEGER NOT NULL PRIMARY KEY,	-- User ID who execute the free gacha

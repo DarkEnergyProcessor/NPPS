@@ -1,5 +1,5 @@
 <?php
-$unit_db = new SQLite3Database('data/unit.db_');
+$unit_db = npps_get_database('unit');
 $unit_table = $DATABASE->execute_query("SELECT unit_table FROM `users` WHERE user_id = $USER_ID")[0][0];
 $unit_list = [];
 

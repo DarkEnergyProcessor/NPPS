@@ -1,5 +1,5 @@
 <?php
-$unit_db = new SQLite3Database('data/unit.db_');
+$unit_db = npps_get_database('unit');
 $some_tables = $DATABASE->execute_query("SELECT unit_table, deck_table, gold, level, current_exp, next_exp, paid_loveca + free_loveca, friend_point, max_unit, max_lp, max_friend, album_table FROM `users` WHERE user_id = $USER_ID")[0];
 $unit_table = $some_tables[0];
 $deck_table = $some_tables[1];

@@ -90,6 +90,7 @@ if(strcmp($_SERVER['REQUEST_METHOD'], "POST") == 0)
 			pkg_type can be:<br/>
 			0 = main download. pkg_id must be 0<br/>
 			1 = live song. pkg_id is the live_track_id in live.db_</br>
+			2 = main story. pkg_id is the scenario_chapter_id in scenario.db_</br>
 			3 = side story. pkg_id is the unit_id in subscenario.db_<br/>
 		</p>
 		<form method="post">

@@ -1,6 +1,6 @@
 <?php
 $banner_list = [];
-$event_common_db = new SQLite3Database('data/event/event_common.db_');
+$event_common_db = npps_get_database('event/event_common');
 
 foreach($DATABASE->execute_query("SELECT event_id, event_end FROM `event_list` WHERE event_close > $UNIX_TIMESTAMP AND event_start <= $UNIX_TIMESTAMP") as $event)
 {

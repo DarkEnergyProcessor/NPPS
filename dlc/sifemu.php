@@ -9,7 +9,7 @@ class SifEmu
 	protected static $XMESSAGECODE = "";
 	protected static $USERNAME = "";
 	protected static $PASSWORD = "";
-	protected static $CLIENT_VERSION = "7.3.43";
+	protected static $CLIENT_VERSION = "7.3.53";
 	
 	/* Don't change below */
 	public $token;

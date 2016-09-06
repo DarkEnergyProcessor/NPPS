@@ -7,7 +7,7 @@ if($target_user_id == 0)
 	return false;
 }
 
-$unit_db = new SQLite3Database('data/unit.db_');
+$unit_db = npps_get_database('unit');
 $unit_table = NULL;
 $deck_table = NULL;
 $main_deck = 0;

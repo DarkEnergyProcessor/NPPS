@@ -1,10 +1,17 @@
 <?php
 $live_id = intval($REQUEST_DATA['live_difficulty_id'] ?? 0);
 $deck_id = intval($REQUEST_DATA['unit_deck_id'] ?? 0);
+$party_user_id = intval($REQUEST_DATA['party_user_id'] ?? 0);
 
-if($live_id == 0 || $deck_id == 0)
+if($live_id == 0 || $deck_id == 0 || $party_user_id == 0)
 {
 	echo 'Invalid live ID or deck ID!';
+	return false;
+}
+
+if(count($DATABASE->execute_query("SELECT live_id FROM `wip_live` WHERE user_id = $USER_ID")) > 0)
+{
+	echo 'Another live is in progress!';
 	return false;
 }
 
@@ -16,12 +23,21 @@ if(!file_exists("data/notes/$live_id.json"))
 }
 
 $live_notes = json_decode(file_get_contents("data/notes/$live_id.json"), true);
-$live_db = new SQLite3Database('data/live.db_');
+$live_db = npps_get_database('live');
 $live_setting_id = 0;
 $needed_lp = 0;
+$needed_token = 0;
+$live_is_random = 0;
+$live_x4_points = 0;
+
+$live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`');
 
 {
-	$temp = $live_db->execute_query("SELECT live_setting_id, capital_value FROM (SELECT live_difficulty_id, live_setting_id, capital_value FROM `normal_live_m` UNION SELECT live_difficulty_id, live_setting_id, capital_value FROM `special_live_m`) WHERE live_difficulty_id = $live_id");
+	$temp = $live_db->execute_query("SELECT live_setting_id, capital_type, capital_value, random_flag, special_setting FROM (
+		SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, 0 as random_flag, 0 as special_setting FROM `normal_live_m` UNION
+		SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, 0 as random_flag, 0 as special_setting FROM `special_live_m` UNION
+		SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, random_flag, special_setting FROM `event_marathon_live_m`
+		) WHERE live_difficulty_id = $live_id");
 	
 	if(count($temp) == 0)
 	{
@@ -29,20 +45,55 @@ $needed_lp = 0;
 		return false;
 	}
 	
-	$live_setting_id = $temp[0][0];
-	$needed_lp = $temp[0][1];
+	$temp = $temp[0];
+	$live_setting_id = $temp['live_setting_id'];
+	$live_is_random = $temp['random_flag'];
+	$live_x4_points = $temp['special_setting'];
+	
+	switch($temp['capital_type'])
+	{
+		case 1:
+		{
+			if(!user_is_enough_lp($USER_ID, $temp['capital_value']))
+			{
+				echo 'Not enough LP!';
+				return false;
+			}
+			
+			//user_sub_lp($USER_ID, $needed_lp);
+			break;
+		}
+		case 2:
+		{
+			$current_token = 0;
+			$needed_token = $temp['capital_value'];
+			$ev = $DATABASE->execute_query("SELECT event_ranking_table FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP");
+			
+			// get current token
+			if(count($ev) == 0)
+			{
+				echo 'No active event!';
+				return false;
+			}
+			
+			$user_event_info = $DATABASE->execute_query("SELECT current_token FROM `{$ev['event_ranking_table']}` WHERE user_id = $USER_ID");
+			
+			if(count($user_event_info) > 0)
+				$current_token = $user_event_info['current_token'];
+			
+			if($current_token < $needed_token)
+			{
+				echo 'Not enough token!';
+				return false;
+			}
+			
+			//$DATABASE->execute_query("UPDATE `{$ev['event_ranking_table']}` SET current_token = current_token - $needed_token WHERE user_id = $USER_ID");
+			break;
+		}
+	}
 }
 
 $live_info = $live_db->execute_query("SELECT stage_level, notes_speed, c_rank_score, b_rank_score, a_rank_score, s_rank_score FROM `live_setting_m` WHERE live_setting_id = $live_setting_id")[0];
-
-// Deduce LP
-if(!user_is_enough_lp($USER_ID, $needed_lp))
-{
-	echo 'Not enough LP!';
-	return false;
-}
-
-//user_sub_lp($USER_ID, $needed_lp);
 
 $lp_info = [];
 
@@ -71,6 +122,14 @@ if(count($active_event) > 0)
 	$active_event = $active_event[0][0];
 else
 	$active_event = NULL;
+
+// Add to wip_live
+$DATABASE->execute_query("INSERT INTO `wip_live` (user_id, live_id, deck_num, guest_user_id, started) VALUES(?, ?, ?, ?, $UNIX_TIMESTAMP)", 'iiii',
+	$USER_ID,
+	$live_id,
+	$deck_id,
+	$party_user_id
+);
 
 // TODO: Add support for MedFes live/play
 return [
@@ -105,9 +164,9 @@ return [
 		'live_info' => [
 			[
 				'live_difficulty_id' => $live_id,
-				'is_random' => false,		// TODO
+				'is_random' => $live_is_random > 0,
 				'dangerous' => $live_info[0] > 10,
-				'use_quad_point' => false,	// TODO
+				'use_quad_point' => $live_x4_points > 0,
 				'notes_speed' => $live_info[1],
 				'notes_list' => $live_notes
 			]
@@ -119,5 +178,3 @@ return [
 	],
 	200
 ];
-
-?>

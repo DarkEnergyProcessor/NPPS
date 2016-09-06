@@ -8,7 +8,7 @@ if($target_idolize == $base_idolize)
 	return false;
 }
 
-$unit_db = new SQLite3Database('data/unit.db_');
+$unit_db = npps_get_database('unit');
 $user_tables = $DATABASE->execute_query("SELECT album_table, unit_table, deck_table FROM `users` WHERE user_id = $USER_ID")[0];
 $album_table = $user_tables[0];
 $unit_table = $user_tables[1];

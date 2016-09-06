@@ -1,12 +1,12 @@
 <?php
-$live_db = new SQLite3Database('data/live.db_');
-$event_common_db = new SQLite3Database('data/event/event_common.db_');
+$live_db = npps_get_database('live');
+$event_common_db = npps_get_database('event/event_common');
 $event_list = [];
 $live_time = [];
 
 $event_common_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS marathon');
 
-$get_stage_level = function(int $live_id, SQLite3Database $live_db, SQLite3Database $event_common_db = NULL): int
+$get_stage_level = function(int $live_id, SQLite3Database $event_common_db = NULL) use($live_db): int
 {
 	$stage_level = $live_db->execute_query("SELECT stage_level FROM `live_setting_m` WHERE live_setting_id = (SELECT live_setting_id FROM `special_live_m` WHERE live_difficulty_id = $live_id)");
 	
@@ -57,7 +57,7 @@ foreach($DATABASE->execute_query("SELECT * FROM `event_list` WHERE event_start <
 			if($ev[$i] && strlen($ev[$i]) > 0)
 				foreach(explode(',', $ev[$i]) as $live_id)
 				{
-					$stage_level = $get_stage_level($live_id, $live_db, $event_common_db);
+					$stage_level = $get_stage_level($live_id, $event_common_db);
 					$event_song_info = $event_common_db->execute_query("SELECT special_setting, random_flag FROM `event_marathon_live_m` WHERE live_difficulty_id = $live_id")[0];
 					
 					$live_time[] = [
@@ -75,15 +75,15 @@ foreach($DATABASE->execute_query("SELECT * FROM `event_list` WHERE event_start <
 // B-side songs
 foreach($DATABASE->execute_query("SELECT * FROM `b_side_schedule` WHERE end_available_time > $UNIX_TIMESTAMP AND start_available_time < $UNIX_TIMESTAMP") as $v)
 {
-	$stage_level = $get_stage_level($v[0], $live_db);
+	$stage_level = $get_stage_level($v[0]);
 	
 	$live_time[] = [
 		'live_difficulty_id' => intval($v[0]),
 		'start_date' => to_datetime($v[1]),
 		'end_date' => to_datetime($v[2]),
-		'is_random' => false,				// TODO
+		'is_random' => false,
 		'dangerous' => $stage_level >= 11,
-		'use_quad_points' => false			// TODO
+		'use_quad_points' => false
 	];
 }
 
@@ -96,9 +96,9 @@ foreach(live_get_current_daily() as $live_id)
 		'live_difficulty_id' => intval($live_id),
 		'start_date' => to_utcdatetime($UNIX_TIMESTAMP - ($UNIX_TIMESTAMP % 86400)),
 		'end_date' => to_utcdatetime($UNIX_TIMESTAMP - ($UNIX_TIMESTAMP % 86400) + 86399),
-		'is_random' => false,				// TODO
+		'is_random' => false,
 		'dangerous' => $stage_level >= 11,
-		'use_quad_points' => false			// TODO
+		'use_quad_points' => false
 	];
 }
 
@@ -106,7 +106,7 @@ return [
 	[
 		'event_list' => $event_list,
 		'live_list' => $live_time,
-		'limited_bonus_list' => []
+		'limited_bonus_list' => []	// Gold bonus is not supported in NPPS
 	],
 	200
 ];

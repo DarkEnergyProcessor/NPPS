@@ -27,7 +27,7 @@ $before_user_info = [
 	$userinfo_temp[0],
 	$DATABASE->execute_query("SELECT scouting_ticket, scouting_coupon, album_table FROM `users` WHERE user_id = $USER_ID")[0]
 ];
-$unit_db = new SQLite3Database('data/unit.db_');
+$unit_db = npps_get_database('unit');
 $secretbox_id = intval($secretbox_id);
 $cost = intval($cost);
 $unit_max = false;

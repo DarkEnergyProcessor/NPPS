@@ -1,5 +1,5 @@
 <?php
-$live_db = new SQLite3Database('data/live.db_');
+$live_db = npps_get_database('live');
 $normal_live = [];
 $special_live = [];
 $event_live = [];
@@ -22,7 +22,7 @@ foreach(
 		foreach($goal_clears as $i => $id)
 		{
 			if($v[2] >= $sc_clears[$i])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -33,7 +33,7 @@ foreach(
 		foreach($goal_clears as $i => $id)
 		{
 			if($v[3] >= $sc_clears[$i + 4])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -45,7 +45,7 @@ foreach(
 		foreach($goal_clears as $i => $id)
 		{
 			if($v[4] >= $clears[$i])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -76,7 +76,7 @@ foreach($DATABASE->execute_query("SELECT live_id FROM `b_side_schedule` WHERE en
 		foreach($goal_clears as $i => $id)
 		{
 			if($live_data['score'] >= $sc_clears[$i])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -87,7 +87,7 @@ foreach($DATABASE->execute_query("SELECT live_id FROM `b_side_schedule` WHERE en
 		foreach($goal_clears as $i => $id)
 		{
 			if($live_data['combo'] >= $sc_clears[$i + 4])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -99,7 +99,7 @@ foreach($DATABASE->execute_query("SELECT live_id FROM `b_side_schedule` WHERE en
 		foreach($goal_clears as $i => $id)
 		{
 			if($live_data['clear'] >= $clears[$i])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -129,7 +129,7 @@ foreach(live_get_current_daily() as $v)
 		foreach($goal_clears as $i => $id)
 		{
 			if($live_data['score'] >= $sc_clears[$i])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -140,7 +140,7 @@ foreach(live_get_current_daily() as $v)
 		foreach($goal_clears as $i => $id)
 		{
 			if($live_data['combo'] >= $sc_clears[$i + 4])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -152,7 +152,7 @@ foreach(live_get_current_daily() as $v)
 		foreach($goal_clears as $i => $id)
 		{
 			if($live_data['clear'] >= $clears[$i])
-				$cleared[] = $id;
+				$cleared[] = $id['live_goal_reward_id'];
 		}
 	}
 	
@@ -167,7 +167,7 @@ foreach(live_get_current_daily() as $v)
 }
 
 // Event live
-$marathon_db = new SQLite3Database('data/event/marathon.db_');
+$marathon_db = npps_get_database('event/marathon');
 foreach($DATABASE->execute_query("SELECT easy_song_list, normal_song_list, hard_song_list, expert_song_list FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_end > $UNIX_TIMESTAMP") as $ev)
 {
 	foreach($ev as $key => $lives)
@@ -189,7 +189,7 @@ foreach($DATABASE->execute_query("SELECT easy_song_list, normal_song_list, hard_
 				foreach($goal_clears as $i => $id)
 				{
 					if($live_data['score'] >= $sc_clears[$i])
-						$cleared[] = $id;
+						$cleared[] = $id['live_goal_reward_id'];
 				}
 			}
 			
@@ -200,7 +200,7 @@ foreach($DATABASE->execute_query("SELECT easy_song_list, normal_song_list, hard_
 				foreach($goal_clears as $i => $id)
 				{
 					if($live_data['combo'] >= $sc_clears[$i + 4])
-						$cleared[] = $id;
+						$cleared[] = $id['live_goal_reward_id'];
 				}
 			}
 			
@@ -212,7 +212,7 @@ foreach($DATABASE->execute_query("SELECT easy_song_list, normal_song_list, hard_
 				foreach($goal_clears as $i => $id)
 				{
 					if($live_data['clear'] >= $clears[$i])
-						$cleared[] = $id;
+						$cleared[] = $id['live_goal_reward_id'];
 				}
 			}
 			

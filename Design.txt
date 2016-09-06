@@ -26,11 +26,7 @@ This server supports locked account system a.k.a banned. If the user is banned, 
 All module and action is located in "modules" folder which contains folder for modules and then in that folder contains PHP script to handle the "action".
 Call to "/api" must be handled separately, but keep loading the action from there.
 
-Most modules and action are commented, so you may want to check it out.
-
-Supports to download files will be added later (needs more inspection). For that, place the files want to be downloaded in the "static" folder.
-
-There's also support for serial codes, but since serial code feature was removed from the game, you need to input it from browser.
+There's also support for serial codes later, but since serial code feature was removed from the game, you need to input it from browser.
 You can open http://<your server location>/serialcode.php to input your serial code.
 The UI is very basic without any CSS styles, but you can modify it to make it better.
 

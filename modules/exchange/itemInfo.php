@@ -1,6 +1,6 @@
 <?php
 
-$unit_db = new SQLite3Database('data/unit.db_');
+$unit_db = npps_get_database('unit');
 $rarity_names = [NULL, 'n', 'r', 'sr', 'ur'];
 
 /* returns

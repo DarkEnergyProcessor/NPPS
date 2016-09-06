@@ -47,7 +47,6 @@ $GLOBALS['attribute_names'] = [
 
 if(isset($REQUEST_HEADERS['if-none-match']))
 {
-	
 	if(strcmp($REQUEST_HEADERS['if-none-match'], $secretbox_hash) == 0)
 	{
 		// Client already have copy of it.

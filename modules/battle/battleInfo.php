@@ -1,6 +1,6 @@
 <?php
 $score_match_list = [];
-$event_common_db = new SQLite3Database('data/event/event_common.db_');
+$event_common_db = npps_get_database('event/event_common');
 
 foreach($DATABASE->execute_query("SELECT event_id, event_ranking_table, easy_lp, normal_lp, hard_lp, expert_lp, technical_lp FROM `event_list` WHERE token_image IS NULL AND event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP") as $ev)
 {

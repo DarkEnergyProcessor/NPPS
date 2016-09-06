@@ -1,5 +1,5 @@
 <?php
-$goals_db = new SQLite3Database('data/achievement.db_');
+$goals_db = npps_get_database('achievement');
 $goals_out = [];
 $list = $goals_db->execute_query('SELECT DISTINCT achievement_category_id FROM `achievement_tag_m` ORDER BY achievement_category_id');
 

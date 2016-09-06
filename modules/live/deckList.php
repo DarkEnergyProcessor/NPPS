@@ -1,5 +1,5 @@
 <?php
-$unit_db = new SQLite3Database('data/unit.db_');
+$unit_db = npps_get_database('unit');
 $guest_info = NULL;
 $guest_leader_skill = 0;
 
@@ -35,7 +35,7 @@ else
 		return false;
 	}
 	
-	$info = user_get_basic_info($guest_id, $unit_db);
+	$info = user_get_basic_info($guest_id);
 	$uifo = $info['unit_info'];
 	$guest_info = [
 		'user_info' => [

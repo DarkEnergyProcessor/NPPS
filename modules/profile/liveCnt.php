@@ -7,9 +7,9 @@ if($target_user_id == 0)
 	return false;
 }
 
-$live_db = new SQLite3Database('data/live.db_');
+$live_db = npps_get_database('live');
 
-$get_live_setting_id = function(int $live_difficulty_id, SQLite3Database $live_db): int
+$get_live_setting_id = function(int $live_difficulty_id) use($live_db): int
 {
 	$temp = $live_db->execute_query("SELECT live_setting_id FROM `normal_live_m` WHERE live_difficulty_id = $live_difficulty_id");
 	if(count($temp) > 0)
@@ -30,7 +30,7 @@ $live_table = $DATABASE->execute_query("SELECT live_table FROM `users` WHERE use
 
 foreach($DATABASE->execute_query("SELECT live_id FROM `$live_table` WHERE times > 0") as $lid)
 {
-	$setting_id = $get_live_setting_id($sid[0], $live_db);
+	$setting_id = $get_live_setting_id($sid[0]);
 	$diff = $live_db->execute_query("SELECT difficulty FROM `live_setting_m` WHERE live_setting_id = $setting_id")[0][0];
 	
 	switch($diff)
