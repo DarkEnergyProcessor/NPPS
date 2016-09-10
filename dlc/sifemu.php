@@ -6,10 +6,10 @@ class SifEmu
 	/* Change these variables if necessary */
 	protected static $SERVER_ADDRESS = "http://prod.en-lovelive.klabgames.net/main.php/";
 	protected static $APPLICATION_ID = "834030294";
-	protected static $XMESSAGECODE = "";
+	protected static $XMESSAGECODE = X_MESSAGE_CODE;
 	protected static $USERNAME = "";
 	protected static $PASSWORD = "";
-	protected static $CLIENT_VERSION = "7.3.53";
+	protected static $CLIENT_VERSION = "7.3.54";
 	
 	/* Don't change below */
 	public $token;

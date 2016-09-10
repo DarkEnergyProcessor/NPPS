@@ -148,8 +148,8 @@ CREATE TABLE `wip_live` (
 	deck_num INTEGER NOT NULL,			-- Used deck in this live show
 	event_id INTEGER DEFAULT NULL,		-- Event ID which starts this live show (like scorematch, medfes)
 	guest_user_id INTEGER DEFAULT NULL,	-- Who is the guest? (non-event only)
-	live_data TEXT DEFAULT NULL			-- Live-specific related data
-	started INTEGER NOT NULL,			-- Used to prevent people from completing live too fast
+	live_data TEXT DEFAULT NULL,		-- Live-specific related data
+	started INTEGER NOT NULL			-- Used to prevent people from completing live too fast
 );
 CREATE TABLE `free_gacha_tracking` (
 	user_id INTEGER NOT NULL PRIMARY KEY,	-- User ID who execute the free gacha
@@ -160,8 +160,9 @@ CREATE TABLE `notice_list` (
 	receiver_user_id INTEGER NOT NULL,				-- To user_id
 	sender_user_id INTEGER NOT NULL,				-- From user_id/affector
 	notice_filter INTEGER NOT NULL,					-- Notice filter ID
-	is_pm BOOL NOT NULL DEFAULT 0,					-- is private message?
 	message TEXT NOT NULL,							-- The message. Truncate to 15 character when sent to client
+	is_new BOOL NOT NULL DEFAULT 1,					-- Is unread?
+	is_pm BOOL NOT NULL DEFAULT 0,					-- Is private message?
 	is_replied BOOL DEFAULT 0						-- Is player already replied to this message?
 );
 CREATE TABLE `b_side_schedule` (

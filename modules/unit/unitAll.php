@@ -1,9 +1,9 @@
 <?php
 $unit_db = npps_get_database('unit');
-$unit_table = $DATABASE->execute_query("SELECT unit_table FROM `users` WHERE user_id = $USER_ID")[0][0];
+$unit_table = npps_query("SELECT unit_table FROM `users` WHERE user_id = $USER_ID")[0][0];
 $unit_list = [];
 
-foreach($DATABASE->execute_query("SELECT * FROM `$unit_table`") as $unit)
+foreach(npps_query("SELECT * FROM `$unit_table`") as $unit)
 {
 	$rarity = $unit_db->execute_query("SELECT rarity FROM `unit_m` WHERE unit_id = {$unit[1]}")[0][0];
 	$is_promo = count($unit_db->execute_query("SELECT unit_id FROM `unit_m` WHERE unit_id = {$unit[1]} AND normal_card_id = rank_max_card_id")) > 0;

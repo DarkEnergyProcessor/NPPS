@@ -67,7 +67,7 @@ function time_elapsed_string(int $datetime, bool $full = false): string {
 }
 
 /* Get SQLite3 database handle */
-function npps_get_database(string $db_name = NULL): DatabaseWrapper
+function npps_get_database(string $db_name = ''): DatabaseWrapper
 {
 	static $db_list = [];
 	
@@ -75,12 +75,22 @@ function npps_get_database(string $db_name = NULL): DatabaseWrapper
 		return $db_list[$db_name];
 	else
 	{
-		if($db_name == NULL || strlen($db_name) == 0)
-			return $db_list[NULL] = $GLOBALS['DATABASE'];
+		if(strlen($db_name) == 0)
+			return $db_list[''] = $GLOBALS['DATABASE'];
 		
 		$xdb = new SQLite3Database("data/$db_name.db_");
 		return $db_list[$db_name] = $xdb;
 	}
+}
+
+function npps_query(string $query, string $list = NULL, ...$arglist)
+{
+	$DATABASE = $GLOBALS['DATABASE'];
+	
+	if($list !== NULL)
+		return $DATABASE->execute_query($query, $list, ...$arglist);
+	else
+		return $DATABASE->execute_query($query);
 }
 
 require('modules/include.card.php');

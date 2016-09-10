@@ -26,16 +26,16 @@ function card_add_direct(int $user_id, int $card_id): int
 		$max_bond = $is_promo ? $temp[7] : $temp[6];
 	}
 	
-	$temp = $DATABASE->execute_query("SELECT unit_table, album_table FROM `users` WHERE user_id = $user_id")[0];
-	if($DATABASE->execute_query("INSERT INTO `{$temp[0]}` (card_id, next_exp, max_level, health_points, max_bond, added_time) VALUES(?, ?, ?, ?, ?, ?)", 'iiiiii', $card_id, $next_exp[0], $max_level, $max_hp, $max_bond, $UNIX_TIMESTAMP))
+	$temp = npps_query("SELECT unit_table, album_table FROM `users` WHERE user_id = $user_id")[0];
+	if(npps_query("INSERT INTO `{$temp[0]}` (card_id, next_exp, max_level, health_points, max_bond, added_time) VALUES(?, ?, ?, ?, ?, ?)", 'iiiiii', $card_id, $next_exp[0], $max_level, $max_hp, $max_bond, $UNIX_TIMESTAMP))
 	{
-		$unit_id = $DATABASE->execute_query('SELECT LAST_INSERT_ID()')[0][0];
+		$unit_id = npps_query('SELECT LAST_INSERT_ID()')[0][0];
 		$flags = 1;
 		
 		if($is_promo)
 			$flags = 2;
 		
-		$DATABASE->execute_query("INSERT OR IGNORE INTO `{$temp[1]}` VALUES (?, ?, 0)", 'ii', $card_id, $flags);
+		npps_query("INSERT OR IGNORE INTO `{$temp[1]}` VALUES (?, ?, 0)", 'ii', $card_id, $flags);
 		
 		return $unit_id;
 	}
@@ -49,10 +49,10 @@ function card_remove(int $user_id, int $unit_own_id): bool
 {
 	global $DATABASE;
 	
-	$info = $DATABASE->execute_query("SELECT unit_table, deck_table, main_deck FROM `users` WHERE user_id = $user_id")[0];
+	$info = npps_query("SELECT unit_table, deck_table, main_deck FROM `users` WHERE user_id = $user_id")[0];
 	$deck_list = [];
 	
-	foreach($DATABASE->execute_query("SELECT deck_num, deck_members FROM `{$info[1]}`") as $a)
+	foreach(npps_query("SELECT deck_num, deck_members FROM `{$info[1]}`") as $a)
 	{
 		$b = explode(':', $a[1]);
 		$deck_list[$a[0]] = $b;
@@ -75,7 +75,7 @@ function card_remove(int $user_id, int $unit_own_id): bool
 		deck_alter($user_id, $k, $v);
 	
 	/* Last: update database */
-	$DATABASE->execute_query("DELETE FROM `{$info[0]}` WHERE unit_id = $unit_own_id");
+	npps_query("DELETE FROM `{$info[0]}` WHERE unit_id = $unit_own_id");
 	
 	return true;
 }
@@ -85,8 +85,8 @@ function card_add(int $user_id, int $card_id, array $item_data = []): int
 {
 	global $DATABASE;
 	
-	$user_unit_info = $DATABASE->execute_query("SELECT unit_table, max_unit FROM `users` WHERE user_id = $user_id")[0];
-	$unit_current = $DATABASE->execute_query("SELECT COUNT(unit_id) FROM `{$user_unit_info[0]}`")[0][0];
+	$user_unit_info = npps_query("SELECT unit_table, max_unit FROM `users` WHERE user_id = $user_id")[0];
+	$unit_current = npps_query("SELECT COUNT(unit_id) FROM `{$user_unit_info[0]}`")[0][0];
 	
 	if($unit_current >= $user_unit_info[1])
 	{
@@ -95,4 +95,63 @@ function card_add(int $user_id, int $card_id, array $item_data = []): int
 	}
 	
 	return card_add_direct($user_id, $card_id);
+}
+
+/* To give player card rewards after completing live or for regular scouting */
+function card_random_regular(): array
+{
+	static $n_list = [];
+	static $r_list = [];
+	static $data_initialized = false;
+	
+	if($data_initialized == false)
+	{
+		$unit_db = npps_get_database('unit');
+		
+		foreach($unit_db->execute_query('SELECT unit_id, unit_level_up_pattern_id, hp_max, rarity, before_love_max, before_level_max FROM `unit_m` WHERE rarity < 3 AND normal_card_id <> rank_max_card_id') as $x)
+		{
+			$level_up_pattern = $unit_db->execute_query("SELECT next_exp, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_m = {$x['unit_level_up_pattern_m']}")[0];
+			
+			$unit_data = [
+				'unit_owning_user_id' => 0,
+				'unit_id' => $x['unit_id'],
+				'exp' => 0,
+				'next_exp' => $level_up_pattern['next_exp'],
+				'level' => 1,
+				'max_level' => $x['before_level_max'],
+				'rank' => 1,
+				'max_rank' => 2,
+				'love' => 0,
+				'max_love' => $x['before_love_max'],
+				'skill_level' => 1,
+				'max_hp' => $x['hp_max'] - $level_up_pattern['hp_diff'],
+				'is_rank_max' => false,
+				'is_love_max' => $is_idolized ? $unit[9] >= $unit[10] : false,
+				'is_level_max' => $is_idolized ? $unit[4] >= $unit[5] : false
+			];
+			
+			switch($x['rarity'])
+			{
+				case 1:
+				{
+					$n_list[] = $unit_data;
+					break;
+				}
+				case 2:
+				{
+					$r_list[] = $unit_data;
+					break;
+				}
+				default: break;
+			}
+		}
+		
+		$data_initialized = true;
+	}
+	
+	// 10% R, 90% N
+	if(random_int(0, 100000) / 1000 - 90.0 <= 0.0)
+		return $r_list[random_int(0, count($r_list) - 1)];
+	else
+		return $n_list[random_int(0, count($n_list) - 1)];
 }

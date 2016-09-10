@@ -8,9 +8,7 @@
 /* Returns the User ID or 0 if fail */
 function user_create(string $key, string $pwd): int
 {
-	global $DATABASE;
-	
-	$unix_ts = time();
+	$unix_ts = $UNIX_TIMESTAMP;
 	$user_data = [
 		$key,		// login_key
 		$pwd,		// login_pwd
@@ -28,9 +26,9 @@ function user_create(string $key, string $pwd): int
 		"",			// login_bonus_table
 		"",			// album_table
 	];
-	if($DATABASE->execute_query('INSERT INTO `users` (login_key, login_pwd, create_date, last_active, next_exp, full_lp_recharge, present_table, assignment_table, live_table, unit_table, deck_table, friend_list, sticker_table, login_bonus_table, album_table, unlocked_badge, unlocked_background) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "", "")', 'ssiiiisssssssss', $user_data))
+	if(npps_query('INSERT INTO `users` (login_key, login_pwd, create_date, last_active, next_exp, full_lp_recharge, present_table, assignment_table, live_table, unit_table, deck_table, friend_list, sticker_table, login_bonus_table, album_table, unlocked_badge, unlocked_background) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "", "")', 'ssiiiisssssssss', $user_data))
 	{
-		$user_id = $DATABASE->execute_query('SELECT LAST_INSERT_ID()');
+		$user_id = npps_query('SELECT LAST_INSERT_ID()');
 		
 		if($user_id)
 			return $user_id[0][0];
@@ -42,23 +40,21 @@ function user_create(string $key, string $pwd): int
 /* Returns true on success, false on failure */
 function user_configure(int $user_id, string $invite_code = NULL): bool
 {
-	global $DATABASE;
-	
 	if($invite_code == NULL)
 	{
 		do
 		{
 			$invite_code = sprintf('%09d', random_int(0,999999999));
 		}
-		while(count($DATABASE->execute_query('SELECT user_id FROM `users` WHERE invite_code = ?', 's', $invite_code)) > 0);
+		while(count(npps_query('SELECT user_id FROM `users` WHERE invite_code = ?', 's', $invite_code)) > 0);
 	}
 	else
-		if(count($DATABASE->execute_query('SELECT user_id FROM `users` WHERE invite_code = ?', 's', $invite_code)) > 0)
+		if(count(npps_query('SELECT user_id FROM `users` WHERE invite_code = ?', 's', $invite_code)) > 0)
 			return false;
 	
 	// Create users table
 	if(
-		$DATABASE->execute_query(<<<QUERY
+		npps_query(<<<QUERY
 BEGIN;
 CREATE TABLE `present_$user_id` (
 	item_pos INTEGER PRIMARY KEY AUTO_INCREMENT,	-- The item position
@@ -150,7 +146,7 @@ QUERY
 			'1',
 			'1',
 		];
-		if($DATABASE->execute_query("UPDATE `users` SET invite_code = ?, present_table = ?, assignment_table = ?, live_table = ?, unit_table = ?, deck_table = ?, sticker_table = ?, login_bonus_table = ?, album_table = ?, unlocked_badge = ?, unlocked_background = ? WHERE user_id = $user_id", 'sssssssssss', $update_info))
+		if(npps_query("UPDATE `users` SET invite_code = ?, present_table = ?, assignment_table = ?, live_table = ?, unit_table = ?, deck_table = ?, sticker_table = ?, login_bonus_table = ?, album_table = ?, unlocked_badge = ?, unlocked_background = ? WHERE user_id = $user_id", 'sssssssssss', $update_info))
 		{
 			if(
 				/* Add Bokura no LIVE Kimi to no LIVE (easy, normal, hard) */
@@ -167,13 +163,11 @@ QUERY
 /* Returns User ID or 0 if fail. Negative value means the user is banned */
 function user_id_from_credentials(string $uid, string $pwd, string $tkn): int
 {
-	global $DATABASE;
-	
-	$arr = $DATABASE->execute_query('SELECT * FROM `logged_in` WHERE token = ?', 's', $tkn);
+	$arr = npps_query('SELECT * FROM `logged_in` WHERE token = ?', 's', $tkn);
 	
 	if($arr && isset($arr[0]))
 	{
-		$user_id = $DATABASE->execute_query('SELECT user_id, locked FROM `users` WHERE login_key = ? AND login_pwd = ?', 'ss', $uid, $pwd);
+		$user_id = npps_query('SELECT user_id, locked FROM `users` WHERE login_key = ? AND login_pwd = ?', 'ss', $uid, $pwd);
 		
 		if($user_id && isset($user_id[0]))
 		{
@@ -187,13 +181,72 @@ function user_id_from_credentials(string $uid, string $pwd, string $tkn): int
 	return 0;
 }
 
-function user_set_last_active(string $uid, string $tkn)
+/* Returns current user information */
+function user_current_info(int $user_id): array
 {
-	global $DATABASE;
+	global $UNIX_TIMESTAMP;
 	
-	$unix_ts = time();
-	$DATABASE->execute_query("UPDATE `users` SET last_active = $unix_ts WHERE user_id = $uid");
-	$DATABASE->execute_query("UPDATE `logged_in` SET time = $unix_ts WHERE token = ?", 's', $tkn);
+	$user_info = npps_query(<<<QUERY
+	SELECT
+		name,
+		level,
+		current_exp,
+		next_exp,
+		gold,
+		paid_loveca,
+		free_loveca,
+		friend_point,
+		max_unit,
+		max_lp,
+		full_lp_recharge,
+		overflow_lp,
+		max_friend,
+		invite_code,
+		tutorial_state
+	FROM `users` WHERE user_id = $user_id
+QUERY
+	)[0];
+
+	$lp_time_charge = $user_info[10] - $UNIX_TIMESTAMP;
+	$total_lp = intdiv($lp_time_charge, 360);
+
+	if($lp_time_charge < 0 || $user_info[11] > 0)
+	{
+		$lp_time_charge = 0;
+		$total_lp = $user_info[9];
+	}
+
+	$total_lp += $user_info[11];
+
+	return [
+		"user_id" => $user_id,
+		"name" => $user_info[0],												// name
+		"level" => $user_info[1],												// level
+		"exp" => $user_info[2],													// current_exp
+		"previous_exp" => $user_info[3] - user_exp_requirement($user_info[1]),	// next_exp - level
+		"next_exp" => $user_info[3],											// next_exp
+		"game_coin" => $user_info[4],											// gold
+		"sns_coin" => $user_info[5] + $user_info[6],							// paid_loveca + free_loveca
+		"paid_sns_coin" => $user_info[5],										// paid_loveca
+		"free_sns_coin" => $user_info[6],										// free_loveca
+		"social_point" => $user_info[7],										// friend_point
+		"unit_max" => $user_info[8],											// max_unit
+		"energy_max" => $user_info[9],											// max_lp
+		"energy_full_time" => to_datetime($user_info[10]),						// full_lp_recharge
+		"energy_full_need_time" => $lp_time_charge,								// full_lp_recharge - time()
+		"over_max_energy" => $total_lp,											// overflow_lp
+		"friend_max" => $user_info[12],											// max_friend
+		"invite_code" => $user_info[13],										// invite_code
+		"tutorial_state" => $user_info[14]										// tutorial_state
+	];
+}
+
+function user_set_last_active(int $uid, string $tkn)
+{
+	global $UNIX_TIMESTAMP;
+	
+	npps_query("UPDATE `users` SET last_active = $UNIX_TIMESTAMP WHERE user_id = $uid");
+	npps_query("UPDATE `logged_in` SET time = $UNIX_TIMESTAMP WHERE token = ?", 's', $tkn);
 }
 
 function user_exp_requirement(int $rank): int
@@ -223,12 +276,11 @@ function user_exp_requirement(int $rank): int
 */
 function user_get_basic_info(int $user_id): array
 {
-	global $DATABASE;
 	$unit_db = npps_get_database('unit');
 	
-	$info = $DATABASE->execute_query("SELECT name, level, main_deck, badge_id, deck_table, unit_table FROM `users` WHERE user_id = $user_id")[0];
-	$leader_own_uid = explode(':', $DATABASE->execute_query("SELECT deck_members FROM `{$info[4]}` WHERE deck_num = {$info[2]}")[0][0])[4];
-	$leader_unit = $DATABASE->execute_query("SELECT card_id, level, max_level, CASE WHEN level = max_level THEN 1 ELSE 0 END, CASE WHEN bond = max_bond THEN 1 ELSE 0 END, bond, skill_level FROM `{$info[5]}` WHERE unit_id = $leader_own_uid")[0];
+	$info = npps_query("SELECT name, level, main_deck, badge_id, deck_table, unit_table FROM `users` WHERE user_id = $user_id")[0];
+	$leader_own_uid = explode(':', npps_query("SELECT deck_members FROM `{$info[4]}` WHERE deck_num = {$info[2]}")[0][0])[4];
+	$leader_unit = npps_query("SELECT card_id, level, max_level, CASE WHEN level = max_level THEN 1 ELSE 0 END, CASE WHEN bond = max_bond THEN 1 ELSE 0 END, bond, skill_level FROM `{$info[5]}` WHERE unit_id = $leader_own_uid")[0];
 	$unit_info = $unit_db->execute_query("SELECT before_level_max, default_leader_skill_id, unit_level_up_pattern_id, smile_max, pure_max, cool_max, hp_max FROM `unit_m` WHERE unit_id = {$leader_unit[0]}")[0];
 	$stats_diff = $unit_db->execute_query("SELECT smile_diff, pure_diff, cool_diff, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = {$unit_info[2]} AND unit_level = {$leader_unit[1]}")[0];
 	
@@ -255,17 +307,16 @@ function user_get_basic_info(int $user_id): array
 
 function user_add_lp(int $user_id, int $amount)
 {
-	global $DATABASE;
 	global $UNIX_TIMESTAMP;
 	
-	$lp_info = $DATABASE->execute_query("SELECT full_lp_recharge, overflow_lp FROM `users` WHERE user_id = $user_id")[0];
+	$lp_info = npps_query("SELECT full_lp_recharge, overflow_lp FROM `users` WHERE user_id = $user_id")[0];
 	$lp_amount_current = (int)ceil(($lp_info[0] - $UNIX_TIMESTAMP) / 360);
 	
 	/* If LP is already full, add to overflow LP count instead */
 	if($lp_amount_current <= 0)
 	{
 		$lp_amount_current = 0;
-		$DATABASE->execute_query("UPDATE `users` SET overflow_lp = overflow_lp + $amount WHERE user_id = $user_id");
+		npps_query("UPDATE `users` SET overflow_lp = overflow_lp + $amount WHERE user_id = $user_id");
 		
 		return;
 	}
@@ -278,41 +329,38 @@ function user_add_lp(int $user_id, int $amount)
 	{
 		/* Some overflow occur */
 		$overflow_amount = (int)ceil(($UNIX_TIMESTAMP - $time_remaining) / 360);
-		$DATABASE->execute_query("UPDATE `users` SET full_lp_recharge = $UNIX_TIMESTAMP, overflow_lp = $overflow_amount WHERE user_id = $user_id");
+		npps_query("UPDATE `users` SET full_lp_recharge = $UNIX_TIMESTAMP, overflow_lp = $overflow_amount WHERE user_id = $user_id");
 		
 		return;
 	}
 	
 	/* Simply decrease the time */
-	$DATABASE->execute_query("UPDATE `users` SET full_lp_recharge = $time_remaining WHERE user_id = $user_id");
+	npps_query("UPDATE `users` SET full_lp_recharge = $time_remaining WHERE user_id = $user_id");
 }
 
 function user_sub_lp(int $user_id, int $amount)
 {
-	global $DATABASE;
-	
-	$lp_info = $DATABASE->execute_query("SELECT full_lp_recharge, overflow_lp FROM `users` WHERE user_id = $user_id")[0];
+	$lp_info = npps_query("SELECT full_lp_recharge, overflow_lp FROM `users` WHERE user_id = $user_id")[0];
 	$overflow_amount = $lp_info[1] - $amount;
 	
 	if($overflow_amount < 0)
 	{
 		/* Decrease full_lp_recharge too */
 		$time_recharge = $UNIX_TIMESTAMP + ($overflow_amount * (-1)) * 360;
-		$DATABASE->execute_query("UPDATE `users` SET full_lp_recharge = $time_recharge, overflow_lp = 0 WHERE user_id = $user_id");
+		npps_query("UPDATE `users` SET full_lp_recharge = $time_recharge, overflow_lp = 0 WHERE user_id = $user_id");
 		
 		return;
 	}
 	
 	/* Simply decrease the overflow LP */
-	$DATABASE->execute_query("UPDATE `users` SET overflow_lp = $overflow_amount WHERE user_id = $user_id");
+	npps_query("UPDATE `users` SET overflow_lp = $overflow_amount WHERE user_id = $user_id");
 }
 
 function user_is_enough_lp(int $user_id, int $amount): bool
 {
-	global $DATABASE;
 	global $UNIX_TIMESTAMP;
 	
-	$lp_info = $DATABASE->execute_query("SELECT full_lp_recharge, overflow_lp, max_lp FROM `users` WHERE user_id = $user_id")[0];
+	$lp_info = npps_query("SELECT full_lp_recharge, overflow_lp, max_lp FROM `users` WHERE user_id = $user_id")[0];
 	$overflow_amount = $lp_info[1] - $amount;
 	
 	if($overflow_amount >= 0)
@@ -335,9 +383,7 @@ function user_is_enough_lp(int $user_id, int $amount): bool
 */
 function user_add_exp(int $user_id, int $exp): array
 {
-	global $DATABASE;
-	
-	$before_rank_up = $DATABASE->execute_query("SELECT level, current_exp, max_lp, max_friend FROM `users` WHERE user_id = $user_id")[0];
+	$before_rank_up = npps_query("SELECT level, current_exp, max_lp, max_friend FROM `users` WHERE user_id = $user_id")[0];
 	$current_level = $before_rank_up[0];
 	$need_exp = user_exp_requirement($before_rank_up[0]);
 	$now_exp = $before_rank_up[1] + $exp;
@@ -351,7 +397,7 @@ function user_add_exp(int $user_id, int $exp): array
 	$now_lp = 25 + intdiv($current_level, 2);
 	$now_friend = 10 + intdiv($current_level, 5);
 	
-	$DATABASE->execute_query("UPDATE `users` SET level = $current_level, current_exp = $now_exp, next_exp = $need_exp, max_lp = $now_lp, max_friend = $now_friend WHERE user_id = $user_id");
+	npps_query("UPDATE `users` SET level = $current_level, current_exp = $now_exp, next_exp = $need_exp, max_lp = $now_lp, max_friend = $now_friend WHERE user_id = $user_id");
 	
 	return [
 		'before' => [
@@ -372,10 +418,9 @@ function user_add_exp(int $user_id, int $exp): array
 /* Is player can do free gacha? */
 function user_is_free_gacha(int $user_id): bool
 {
-	global $DATABASE;
 	global $UNIX_TIMESTAMP;
 	
-	$temp = $DATABASE->execute_query("SELECT next_free_gacha FROM `free_gacha_tracking` WHERE user_id = $user_id");
+	$temp = npps_query("SELECT next_free_gacha FROM `free_gacha_tracking` WHERE user_id = $user_id");
 	
 	return count($temp) == 0 ? true : $temp[0][0] >= $UNIX_TIMESTAMP;
 }
@@ -386,23 +431,19 @@ function user_disable_free_gacha(int $user_id)
 	global $DATABASE;
 	global $UNIX_TIMESTAMP;
 	
-	$DATABASE->execute_query('INSERT OR IGNORE INTO `free_gacha_tracking` VALUES (?, ?)', 'ii', $user_id, $UNIX_TIMESTAMP - ($UNIX_TIMESTAMP % 86400) + 86400);
+	npps_query('INSERT OR IGNORE INTO `free_gacha_tracking` VALUES (?, ?)', 'ii', $user_id, $UNIX_TIMESTAMP - ($UNIX_TIMESTAMP % 86400) + 86400);
 }
 
 function user_get_free_gacha_timestamp(int $user_id): int
 {
-	global $DATABASE;
-	
-	$temp = $DATABASE->execute_query("SELECT next_free_gacha FROM `free_gacha_tracking` WHERE user_id = $user_id");
+	$temp = npps_query("SELECT next_free_gacha FROM `free_gacha_tracking` WHERE user_id = $user_id");
 	
 	return count($temp) == 0 ? 0 : $temp[0][0];
 }
 
 function user_get_gauge(int $user_id, bool $unmul = false): int
 {
-	global $DATABASE;
-	
-	$temp = $DATABASE->execute_query("SELECT gauge FROM `secretbox_gauge` WHERE user_id = $user_id");
+	$temp = npps_query("SELECT gauge FROM `secretbox_gauge` WHERE user_id = $user_id");
 	
 	return count($temp) == 0 ? 0 : ($unmul ? $temp[0][0] : $temp[0][0] * 10);
 }
@@ -410,24 +451,20 @@ function user_get_gauge(int $user_id, bool $unmul = false): int
 /* returns cycle how many times it already beyond 100 */
 function user_increase_gauge(int $user_id, int $amount = 1): int
 {
-	global $DATABASE;
-	
 	$temp = user_get_gauge($user_id, true) + $amount;
 	$cycle = 0;
 	
 	for(; $temp >= 10; $temp -= 10)
 		$cycle++;
 	
-	$DATABASE->execute_query('REPLACE INTO `secretbox_gauge` VALUES(?, ?)', 'ii', $user_id, $temp);
+	npps_query('REPLACE INTO `secretbox_gauge` VALUES(?, ?)', 'ii', $user_id, $temp);
 	return $cycle;
 }
 
 /* returns true if success, false if not enough loveca */
 function user_sub_loveca(int $user_id, int $amount): bool
 {
-	$DATABASE = $GLOBALS['DATABASE'];
-	
-	$loveca = $DATABASE->execute_query("SELECT paid_loveca, free_loveca FROM `users` WHERE user_id = $user_id")[0];
+	$loveca = npps_query("SELECT paid_loveca, free_loveca FROM `users` WHERE user_id = $user_id")[0];
 	
 	if($loveca['paid_loveca'] >= $amount)
 		$loveca['paid_loveca'] -= $amount;
@@ -440,5 +477,5 @@ function user_sub_loveca(int $user_id, int $amount): bool
 		else
 			return false;
 	
-	return !!$DATABASE->execute_query('UPDATE `users` SET paid_loveca = ?, free_loveca = ? WHERE user_id = ?', 'iii', $loveca['paid_loveca'], $loveca['free_loveca'], $user_id);
+	return !!npps_query('UPDATE `users` SET paid_loveca = ?, free_loveca = ? WHERE user_id = ?', 'iii', $loveca['paid_loveca'], $loveca['free_loveca'], $user_id);
 }

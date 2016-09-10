@@ -1,7 +1,7 @@
 <?php
 // Placeholder only
 // TODO: Support event ranking specific ID
-
+/*
 $rank_page = intval($REQUEST_DATA['page'] ?? -1);
 $rank_limit = intval($REQUEST_DATA['limit'] ?? -1);
 $rank_event = intval($REQUEST_DATA['event_id'] ?? 0);
@@ -18,7 +18,7 @@ if(count($ranking_table) == 0)
 {
 	echo 'Non-existent event ID';
 	return false;
-}
+}*/
 
 return [
 	[

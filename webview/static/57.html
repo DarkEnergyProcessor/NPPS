@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+        <title>Qualifying notes</title>
+        <link rel="stylesheet" href="/resources/css1.3/bstyle.css">
+        <link rel="stylesheet" href="/resources/css1.3/regulation.css">
+        <script type="text/javascript">
+var strUA = "";
+
+strUA = navigator.userAgent.toLowerCase();
+
+var iOSclient = false;
+if(strUA.indexOf("iphone") >= 0) iOSclient = true;
+if(strUA.indexOf("ipad") >= 0) iOSclient = true;
+
+if(iOSclient) {
+  var engineIF = function() {};
+  engineIF.prototype.cmd = function(keyString) {
+    location.href = "native://" + keyString;
+  }
+}
+
+var eng = new engineIF();
+if (eng === undefined || eng === null) {
+  eng = {
+    cmd : function() {
+    //noop
+    }
+  }
+}
+
+if(strUA.indexOf("iphone") >= 0) {
+  document.write('<meta name="viewport" content="width=880px, minimum-scale=0.45, maximum-scale=0.45" />');
+} else if (strUA.indexOf("ipad") >= 0) {
+  document.write('<meta name="viewport" content="width=1024px, minimum-scale=0.9, maximum-scale=0.9" />');
+} else {
+  document.write('<meta name="viewport" content="width=880px, minimum-scale=0.4, maximum-scale=0.4" />');
+}
+</script>
+</head>
+
+<body>
+        <div class="container">
+		<h1 style="background-image:url(/resources/img/help/bg01_01.png); background-repeat: no-repeat; color:white" align="center" width="900px" height="78px"> <b><font style="background-color:#FC6399;font-size:30px;"><span style="color:white;">注意事項</span></font></b></h1>
+                <div id="box1" style="visibility: visible; display: block;">
+                        <div class="content_regu" style="width:900px;">
+                                <div class="note">
+					・参加期間<br>
+					<span style="color:red">2016年1月31日(日) 16:00 ～ 2016年2月15日(月) 15:00</span><br>
+					上記期間中、最大10回まで課題楽曲に挑戦することができます。<br>
+                     <br>
+					・期間中に一度もオンライン予選に参加されなかった場合、<br>
+                       二次予選へ応募をすることができませんのでご注意ください。<br>
+                      <br>
+					・ゲームオーバーや曲の途中でアプリを終了した場合、<br>
+                       プレイ曲数1回分としてカウントされますので、<br>
+                       挑戦される際にはご注意ください。<br>
+                      <br>
+                    ・2/15(月)15時以降にライブが終了するとスコアは記録されません。<br>
+                        終了直前のライブはご注意くださいますようお願いいたします。<br>
+					<br>
+					課題曲：「SUNNY DAY SONG」<br>
+					難易度：EASY、NORMAL、HARD、EXPERTの4種から自由選択<br>
+					ユニット：「SUNNY DAY SONG」<br>
+                                  <span style="color:red">※変更不可。お手持ちのユニットはご使用頂けません。</span><br>
+                    <br>
+					<span style="color:blue">
+						※オンライン予選用の楽曲となりますので、<br>
+                            通常プレイ楽曲「SUNNY DAY SONG」とは一部仕様が異なります。<br>
+                            譜面の変更はございません。<br>
+                      <br>
+						※カットインやエフェクトの有無の指定はございません。<br>
+                            プレイ前に各種設定をご確認ください。
+					</span><br>
+                                </div>
+                        </div>
+                </div>
+                <div class="footer">
+                        <img src="/resources/img/help/bg03.png" width="900px" height="30px">
+                </div>
+        </body>
+</html>

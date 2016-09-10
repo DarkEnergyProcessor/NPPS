@@ -4,7 +4,7 @@ $cost = $REQUEST_DATA['cost_priority'] ?? '';
 
 if(preg_match('/\D/', $secretbox_id) == 1 || preg_match('/\D/', $cost) == 1)
 {
-	echo 'secretbox ID or cost priority is not string';
+	echo 'secretbox ID or cost priority is not int';
 	return false;
 }
 

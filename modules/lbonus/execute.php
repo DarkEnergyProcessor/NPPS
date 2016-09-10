@@ -1,5 +1,5 @@
 <?php
-$login_bonus_table = $DATABASE->execute_query("SELECT login_bonus_table, login_count, create_date FROM `users` WHERE user_id = $USER_ID")[0];
+$login_bonus_table = npps_query("SELECT login_bonus_table, login_count, create_date FROM `users` WHERE user_id = $USER_ID")[0];
 
 /* Initialize login bonus table */
 $last_login = $login_bonus_table[1] - ($login_bonus_table[1] % 86400);
@@ -8,17 +8,17 @@ $first_login = ($current_day - ($login_bonus_table[2] - ($login_bonus_table[2] %
 
 /* Configure login bonus if not exists */
 {
-	$lbonus = $DATABASE->execute_query("SELECT login_bonus_id FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = 0");
+	$lbonus = npps_query("SELECT login_bonus_id FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = 0");
 	
 	if(count($lbonus) == 0)
-		$DATABASE->execute_query("INSERT INTO `{$login_bonus_table[0]}` VALUES(0, 0)");
+		npps_query("INSERT INTO `{$login_bonus_table[0]}` VALUES(0, 0)");
 	
-	foreach($DATABASE->execute_query("SELECT login_bonus_id FROM `special_login_bonus`") as $list_lbonus)
+	foreach(npps_query("SELECT login_bonus_id FROM `special_login_bonus`") as $list_lbonus)
 	{
-		$lbonus = $DATABASE->execute_query("SELECT login_bonus_id FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = {$list_lbonus[0]}");
+		$lbonus = npps_query("SELECT login_bonus_id FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = {$list_lbonus[0]}");
 		
 		if(count($lbonus) == 0)
-			$DATABASE->execute_query("INSERT INTO `{$login_bonus_table[0]}` VALUES({$list_lbonus[0]}, 0)");
+			npps_query("INSERT INTO `{$login_bonus_table[0]}` VALUES({$list_lbonus[0]}, 0)");
 	}
 }
 
@@ -39,11 +39,11 @@ $login_bonus_ok = $last_login < $current_day;
 		$reset_lbonus = strcmp(date('Y-m', $last_login), date('Y-m')) != 0;
 		
 		if($reset_lbonus == false)
-			$lbonus_count = $DATABASE->execute_query("SELECT counter FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = 0")[0][0];
+			$lbonus_count = npps_query("SELECT counter FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = 0")[0][0];
 		
 		$main_lbonus_counter[0] = $lbonus_count;
 		
-		foreach($DATABASE->execute_query("SELECT item_id, card_num, amount, day FROM `login_bonus` WHERE month = $current_month ORDER BY day LIMIT $last_day_month") as $itemlist)
+		foreach(npps_query("SELECT item_id, card_num, amount, day FROM `login_bonus` WHERE month = $current_month ORDER BY day LIMIT $last_day_month") as $itemlist)
 		{
 			$item_translated = item_translate_to_array($itemlist[0], $itemlist[2], $itemlist[1]);
 			$main_lbonus_itemlist[] = [
@@ -69,21 +69,21 @@ $login_bonus_ok = $last_login < $current_day;
 			
 			if($reset_lbonus)
 				/* Reset counter instead */
-				$DATABASE->execute_query("UPDATE `{$login_bonus_table[0]}` SET counter = 1 WHERE login_bonus_id = 0");
+				npps_query("UPDATE `{$login_bonus_table[0]}` SET counter = 1 WHERE login_bonus_id = 0");
 			else
 				/* Increment */
-				$DATABASE->execute_query("UPDATE `{$login_bonus_table[0]}` SET counter = counter + 1 WHERE login_bonus_id = 0");
+				npps_query("UPDATE `{$login_bonus_table[0]}` SET counter = counter + 1 WHERE login_bonus_id = 0");
 		}
 		
 		$main_lbonus_counter[1] = $lbonus_count;
 	}
 	
 	/* special login bonus */
-	foreach($DATABASE->execute_query("SELECT * FROM `special_login_bonus` WHERE login_bonus_id > 0") as $lbonus_data)
+	foreach(npps_query("SELECT * FROM `special_login_bonus` WHERE login_bonus_id > 0") as $lbonus_data)
 	{
 		$has_error = false;
 		$itemlist = [];
-		$lbonus_counter = $DATABASE->execute_query("SELECT counter FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = {$lbonus_data[0]}")[0][0];
+		$lbonus_counter = npps_query("SELECT counter FROM `{$login_bonus_table[0]}` WHERE login_bonus_id = {$lbonus_data[0]}")[0][0];
 		$stamp_num = $lbonus_counter;
 		$get_item = [
 			'amount' => 0,
@@ -132,7 +132,7 @@ $login_bonus_ok = $last_login < $current_day;
 				'message' => 'Special Login Bonus: '.$TEXT_TIMESTAMP
 			], $reward_current['amount'], $reward_current['incentive_item_id'] ?? 0);
 			
-			$DATABASE->execute_query("UPDATE `{$login_bonus_table[0]}` SET counter = counter + 1 WHERE login_bonus_id = {$lbonus_data[0]}");
+			npps_query("UPDATE `{$login_bonus_table[0]}` SET counter = counter + 1 WHERE login_bonus_id = {$lbonus_data[0]}");
 		}
 		
 		$special_lbonus[] = [
@@ -151,7 +151,7 @@ $login_bonus_ok = $last_login < $current_day;
 	{
 		$current_day = date('d-m');
 		$lbonus_id = NULL;
-		$lbonus_birthday = $DATABASE->execute_query("SELECT * FROM `birthday_login_bonus` WHERE date = ?", 's', $current_day);
+		$lbonus_birthday = npps_query("SELECT * FROM `birthday_login_bonus` WHERE date = ?", 's', $current_day);
 		
 		{
 			$temp = explode('-', $current_day);
@@ -212,7 +212,7 @@ if(count($main_lbonus_item) == 0)
 $start_date = strtotime('first day of this month');
 $end_date = strtotime('first day of next month');
 
-$DATABASE->execute_query("UPDATE `users` SET login_count = $UNIX_TIMESTAMP WHERE user_id = $USER_ID");
+npps_query("UPDATE `users` SET login_count = $UNIX_TIMESTAMP WHERE user_id = $USER_ID");
 
 return [
 	[

@@ -10,3 +10,4 @@ web.config
 dlc/sifemu.php
 save.json
 .lock_sifemu
+!/webview/static/*.html

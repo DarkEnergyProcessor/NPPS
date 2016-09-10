@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta charset="utf-8">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="viewport" content="width=980px, user-scalable=no,minimum-scale=0.30, maximum-scale=1.0">
+	<title>Login Restricted!</title>
+	<link rel="stylesheet" href="/resources/css1.3/bstyle.css"> 
+	<style>
+		html, body {
+			background-color: transparent;
+		}
+		h1 {
+			background-image: url('/resources/img/help/bg01_maint.png');
+			color: red;
+			font-size:40px;
+			font-weight: bold;
+			height: 63px;
+			padding-top: 15px;
+			text-align: center;
+			width: 900px;
+		}
+		.filler {
+			background-color: #ff639c;
+		}
+		.paragraph {
+			color: red;
+			padding: 20px;
+			background: url(/resources/img/help/bg02.png) repeat-y;
+		}
+	</style>
+	<script type="text/javascript">
+		window.onload = function() {
+			setTimeout(function(){window.scrollTo(0, 1);}, 100);
+		}
+	</script>
+	</head>
+	<body>
+		<div class="container">
+			<h1>
+				<span class="filler">Login Restricted!</span>
+			</h1>
+			<div class="paragraph">
+				We found that your account violates our Terms of Service.<br>
+				For that reason, we've locked your account.<br>
+				<br>
+				If you think this is a mistake, please contact E-mail<br>
+				address below.<br>
+				<br>
+				Please note that we might or might not unlock your account.<br>
+				<br>
+				<ul>
+					<li><h2 class="f_b">Inquiry E-mail</h2></li>
+				</ul>
+				<a href="mailto:lovelive-sif@dep.co.id?subject=%5BInquiry%5DLogin+Restricted&body=Information%0a%0aDevice%3A+__device__%0a%0a">
+					lovelive-sif@dep.co.id
+				</a>
+			</div>
+			<div class="footer">
+				<img src="/resources/img/help/bg03.png" height="30px" width="900px">
+			</div>
+		</div>
+	</body>
+</html>

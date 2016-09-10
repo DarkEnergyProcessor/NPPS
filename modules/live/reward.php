@@ -1,6 +1,6 @@
 <?php
 // TODO: Complete it
-$is_int_list = function(int ...&$varlist): bool
+$is_int_list = function(int& ...$varlist): bool
 {
 	foreach($varlist as &$x)
 		if(is_int($x) == false)
@@ -60,7 +60,7 @@ $live_guest_id = 0;
 
 // get data from WIP live
 {
-	$wip_live = $DATABASE->execute_query("SELECT * FROM `wip_live` WHERE user_id = $USER_ID");
+	$wip_live = npps_query("SELECT * FROM `wip_live` WHERE user_id = $USER_ID");
 	
 	if(count($wip_live) == 0)
 	{
@@ -68,13 +68,14 @@ $live_guest_id = 0;
 		return false;
 	}
 	
+	$wip_live = $wip_live[0];
 	if($wip_live['live_id'] != $live_difficulty_id)
 	{
 		echo 'Invalid live_difficulty_id!';
 		return false;
 	}
 	
-	$DATABASE->execute_query("DELETE FROM `wip_live` WHERE user_id = $USER_ID");
+	npps_query("DELETE FROM `wip_live` WHERE user_id = $USER_ID");
 	
 	// get live info
 	$live_data = $live_db->execute_query("SELECT live_setting_id, capital_type, capital_value, random_flag, special_setting,
@@ -103,7 +104,7 @@ $live_guest_id = 0;
 }
 
 $before_user_info = (include('modules/user/userInfo.php'))[1]['user'];
-$player_tables = $DATABASE->execute_query("SELECT album_table, live_table, unit_table, present_table, deck_table, friend_list FROM `users` WHERE user_id = $USER_ID");
+$player_tables = npps_query("SELECT album_table, live_table, unit_table, present_table, deck_table, friend_list FROM `users` WHERE user_id = $USER_ID");
 
 // get last live tracking data and goals data
 $live_data_goals = [];	// [score_list, combo_list, clear_list] with format [live_goal_data, target]
@@ -114,7 +115,7 @@ $last_live_data = [
 	'normal' => 0
 ];
 {
-	$temp = $DATABASE->execute_query("SELECT * FROM `{$player_tables['live_table']}` WHERE live_id = $live_difficulty_id");
+	$temp = npps_query("SELECT * FROM `{$player_tables['live_table']}` WHERE live_id = $live_difficulty_id");
 	
 	if(count($temp) > 0)
 	{
@@ -150,7 +151,7 @@ $last_live_data = [
 	];
 	
 	foreach($goal_list as $goal)
-		$live_data_goals[$goal['live_goal_type'] - 1][0] = $goal
+		$live_data_goals[$goal['live_goal_type'] - 1][0] = $goal;
 }
 
 
@@ -216,7 +217,7 @@ $cleared_live_rewards = [];
 	// modify last live table
 	$put_score = max($score_total, $last_live_data['score']);
 	$put_combo = max($max_combo, $last_live_data['combo']);
-	$DATABASE->execute_query("REPLACE INTO `{$player_tables['live_table']}` VALUES($live_difficulty_id, {$last_live_data['normal']}, $put_score, $put_combo, $play_times");
+	npps_query("REPLACE INTO `{$player_tables['live_table']}` VALUES($live_difficulty_id, {$last_live_data['normal']}, $put_score, $put_combo, $play_times");
 }
 
 // increase EXP, add gold, and add FP
@@ -224,6 +225,7 @@ $player_data_info = NULL;
 $player_exp = 0;
 $player_gained_fp = 5;
 $player_gained_gold = $live_coin_table[$live_score_rank][min($live_difficulty_level, 4) - 1];
+$player_exp_unit_max = 90;
 {
 	if($live_score_rank == 5)
 		// half exp
@@ -232,8 +234,59 @@ $player_gained_gold = $live_coin_table[$live_score_rank][min($live_difficulty_le
 	if(array_search(strval($guest_user_id), explode(',', $player_tables['friend_list']) ?: []) !== false)
 		$player_gained_fp = 10;
 	
+	$player_exp_unit_max = npps_query("SELECT max_unit FROM `users` WHERE user_id = $USER_ID")[0][0];
 	$player_data_info = user_add_exp($USER_ID, $player_exp);
-	$DATABASE->execute_query("UPDATE `users` SET gold = gold + $player_gained_gold, friend_point = friend_point + $player_gained_fp WHERE user_id = $USER_ID");
+	
+	npps_query("UPDATE `users` SET gold = gold + $player_gained_gold, friend_point = friend_point + $player_gained_fp WHERE user_id = $USER_ID");
+}
+
+// Live members
+$reward_members = [
+	'live_clear' => [],
+	'live_rank' => [],
+	'live_combo' => []
+];
+$common_present_box_data = [
+	'message' => 'Live Show! Reward',
+	'expire' => NULL
+];
+{
+	// Live clear
+	$member = card_random_regular();
+	$member['add_type'] = 1001,
+	$member['unit_owning_user_id'] = card_add($USER_ID, $member['unit_id'], $common_present_box_data);
+	if($member['unit_owning_user_id'] == 0)
+		$member['unit_owning_user_id'] = token_use_pseudo_unit_own_id($TOKEN);
+	
+	$reward_members['live_clear'][0] = $member;
+	
+	// At least C score
+	if($live_score_rank < 5)
+	{
+		$member = card_random_regular();
+		$member['add_type'] = 1001,
+		$member['unit_owning_user_id'] = card_add($USER_ID, $member['unit_id'], $common_present_box_data);
+		if($member['unit_owning_user_id'] == 0)
+			$member['unit_owning_user_id'] = token_use_pseudo_unit_own_id($TOKEN);
+		
+		$reward_members['live_rank'][0] = $member;
+	}
+	
+	// At least C combo
+	if($live_combo_rank > 0)
+	{
+		$member = card_random_regular();
+		$member['add_type'] = 1001,
+		$member['unit_owning_user_id'] = card_add($USER_ID, $member['unit_id'], $common_present_box_data);
+		if($member['unit_owning_user_id'] == 0)
+			$member['unit_owning_user_id'] = token_use_pseudo_unit_own_id($TOKEN);
+		
+		$reward_members['live_combo'][0] = $member;
+	}
+}
+
+// Calculate bond
+{
 }
 
 // return data
@@ -244,13 +297,13 @@ return [
 		'combo_rank' => $live_combo_rank,
 		'total_love' => $love_cnt,
 		'is_high_score' => $score_total > $last_live_data['score'],
-		'hi_score' => max($score_total, $last_live_data['score']);
+		'hi_score' => $last_live_data['score'];
 		'base_reward_info' => [
 			'player_exp' => $player_exp,
 			'player_exp_unit_max' => [
 				// TODO
-				// before =>
-				// after =>
+				'before' => $player_exp_unit_max
+				'after' => $player_exp_unit_max
 			],
 			'player_exp_friend_max' => [
 				'before' => $player_data_info['before']['max_friend'],
@@ -264,6 +317,8 @@ return [
 			'game_coin_reward_box_flag' => false,
 			'social_point' => $player_gained_fp
 		],
+		'reward_unit_list' => $reward_members,
+		
 	],
 	200
 ];

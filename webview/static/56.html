@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Online Tournament Rule Description</title>
+<link rel="stylesheet" href="/resources/css1.2/bstyle.css" />
+<script type="text/javascript">
+<!--
+window.onload = function() {
+   document.getElementById("back").children[0].style.visibility = "hidden";
+  setTimeout(function(){window.scrollTo(0, 1);}, 100);
+}
+
+var strUA = '';
+strUA = navigator.userAgent.toLowerCase();
+
+if(strUA.indexOf('iphone') >= 0) {
+  document.write('<meta name="viewport" content="width=880, minimum-scale=0.45, maximum-scale=0.45" />');
+} else if (strUA.indexOf("ipad") >= 0) {
+  document.write('<meta name="viewport" content="width=1024, minimum-scale=0.9, maximum-scale=0.9" />');
+} else {
+  document.write('<meta name="viewport" content="width=880, minimum-scale=0.38, maximum-scale=0.38" />');
+}
+
+// 99_01.jpg .. 99_02.jpg .. 99_N.pngのように連番で採番しておく
+// 画像が何枚あるかはハードコーディング
+
+function backImage(){
+    document.getElementById("next").children[0].style.visibility = "visible";
+    var filename = document.getElementById("main-contents").children[0].src.split('/').pop();
+
+    // imgN.png
+    var fileno = filename.match(/99_(\d+)/);
+    var nextFileno = "0" + (parseInt(fileno[1].substr(fileno[1].length - 1)) - 1).toString();
+
+    if(nextFileno == "01"){
+        // backボタンを無効化する
+        document.getElementById("back").children[0].style.visibility = "hidden";
+    }
+    document.getElementById("main-contents").children[0].src = "/resources/img/online/e_ol_99_" + nextFileno + ".png";
+}
+
+function nextImage(){
+    document.getElementById("back").children[0].style.visibility = "visible";
+    var filename = document.getElementById("main-contents").children[0].src.split('/').pop();
+
+    // imgN.png
+    var fileno = filename.match(/99_(\d+)/);
+    var nextFileno = "0" + (parseInt(fileno[1].substr(fileno[1].length - 1)) + 1).toString();
+
+    if(nextFileno == "03"){
+        // nextボタンを無効化する
+        document.getElementById("next").children[0].style.visibility = "hidden";
+    }
+    document.getElementById("main-contents").children[0].src = "/resources/img/online/e_ol_99_" + nextFileno + ".png";
+}
+//-->
+</script>
+<style>
+<!--
+#main-contents{
+    height:auto;
+    margin-left:auto;
+    margin-right:auto;
+    margin-bottom:0px;
+    margin-top:0px;
+}
+#main-contents img{
+    width:85%;
+    margin-left:auto;
+    margin-right:auto;
+    display: block;
+}
+#button-footer{
+    margin-left:auto;
+    margin-right:auto;
+}
+#back{
+    float:left;
+}
+#next{
+    float:right;
+}
+//-->
+</style>
+</head>
+<body>
+    <div id="main-contents">
+        <img src="/resources/img/online/e_ol_99_01.png">
+    </div>
+<div id="button-footer">
+    <div id="next">
+        <img src="/resources/img/online/com_button_02.png" onClick="nextImage()"/></a>
+    </div>
+    <div id="back">
+        <img src="/resources/img/online/com_button_01.png"  onClick="backImage()"/></a>
+    </div>
+</div>
+<!--  -->
+</body>
+</html>
