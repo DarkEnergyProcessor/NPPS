@@ -1,5 +1,4 @@
 <?php
-// TODO: Complete it
 $is_int_list = function(int& ...$varlist): bool
 {
 	foreach($varlist as &$x)
@@ -51,12 +50,12 @@ $wip_live_data = NULL;
 $live_db = npps_get_database('live');
 $unit_db = npps_get_database('unit');
 $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`');
-$unit_db->execute_query('ATTACH DATABASE `data/subscenario.db_` AS `subscenario`');
 // $live_notes_data = json_decode(file_get_contents("data/notes/$live_difficulty_id.json"), true);
 $clear_times_data = NULL;
 $live_setting_id = 0;
 $live_difficulty_level = 1;	// not live_difficulty_id
 $live_guest_id = 0;
+$used_deck_id = 0;
 
 // get data from WIP live
 {
@@ -101,10 +100,11 @@ $live_guest_id = 0;
 	];
 	$live_setting_id = $live_data['live_setting_id'];
 	$live_guest_id = $wip_live['guest_user_id'];
+	$used_deck_id = $wip_live['deck_num'];
 }
 
-$before_user_info = (include('modules/user/userInfo.php'))[1]['user'];
-$player_tables = npps_query("SELECT album_table, live_table, unit_table, present_table, deck_table, friend_list FROM `users` WHERE user_id = $USER_ID");
+$before_user_info = user_current_info($USER_ID);
+$player_tables = npps_query("SELECT album_table, live_table, unit_table, present_table, deck_table, friend_list FROM `users` WHERE user_id = $USER_ID")[0];
 
 // get last live tracking data and goals data
 $live_data_goals = [];	// [score_list, combo_list, clear_list] with format [live_goal_data, target]
@@ -119,6 +119,7 @@ $last_live_data = [
 	
 	if(count($temp) > 0)
 	{
+		$temp = $temp[0];
 		$last_live_data['score'] = $temp['score'];
 		$last_live_data['combo'] = $temp['combo'];
 		$last_live_data['clear'] = $temp['times'];
@@ -126,7 +127,7 @@ $last_live_data = [
 	}
 	
 	// create live goals data
-	$temp = $live_db->execute_query("SELECT c_rank_score, b_rank_score, a_rank_score, s_rank_score
+	$temp = $live_db->execute_query("SELECT c_rank_score, b_rank_score, a_rank_score, s_rank_score, 
 		c_rank_combo, b_rank_combo, a_rank_combo, s_rank_combo FROM `live_setting_m` WHERE live_setting_id = $live_setting_id")[0];
 	$goal_list = $live_db->execute_query("SELECT * FROM `live_goal_reward_m` WHERE live_difficulty_id = $live_difficulty_id
 		ORDER BY live_goal_type ASC, rank DESC");
@@ -151,7 +152,7 @@ $last_live_data = [
 	];
 	
 	foreach($goal_list as $goal)
-		$live_data_goals[$goal['live_goal_type'] - 1][0] = $goal;
+		$live_data_goals[$goal['live_goal_type'] - 1][$goal['rank'] - 1][0] = $goal;
 }
 
 
@@ -165,35 +166,44 @@ $cleared_live_rewards = [];
 {
 	foreach($live_data_goals[0] as $score_goal)
 	{
-		if($score_total >= $score_goal[1] && $last_live_data['score'] < $score_goal[1])
+		if($score_total >= $score_goal[1])
 		{
-			item_collect($USER_ID, $score_goal[0]['add_type'], $score_goal[0]['item_id'], $score_goal[0]['amount']);
-			
-			$cleared_live_goals[] = $score_goal[0]['live_goal_reward_id'];
-			$cleared_live_rewards[] = [
-				'item_id' => $score_goal[0]['item_id'],
-				'add_type' => $score_goal[0]['add_type'],
-				'amount' => $score_goal[0]['amount'],
-				'item_category_id' => $score_goal[0]['item_category_id']
-			];
 			$live_score_rank = $score_goal[0]['rank'];
+			
+			if($last_live_data['score'] < $score_goal[1])
+			{
+				item_collect($USER_ID, $score_goal[0]['add_type'], $score_goal[0]['item_id'], $score_goal[0]['amount']);
+				
+				$cleared_live_goals[] = $score_goal[0]['live_goal_reward_id'];
+				$cleared_live_rewards[] = [
+					'item_id' => $score_goal[0]['item_id'],
+					'add_type' => $score_goal[0]['add_type'],
+					'amount' => $score_goal[0]['amount'],
+					'item_category_id' => $score_goal[0]['item_category_id']
+				];
+				
+			}
 		}
 	}
 	
 	foreach($live_data_goals[1] as $combo_goal)
 	{
-		if($max_combo >= $combo_goal[1] && $last_live_data['combo'] < $combo_goal[1])
+		if($max_combo >= $combo_goal[1])
 		{
-			item_collect($USER_ID, $combo_goal[0]['add_type'], $combo_goal[0]['item_id'], $combo_goal[0]['amount']);
-			
-			$cleared_live_goals[] = $combo_goal[0]['live_goal_reward_id'];
-			$cleared_live_rewards[] = [
-				'item_id' => $combo_goal[0]['item_id'],
-				'add_type' => $combo_goal[0]['add_type'],
-				'amount' => $combo_goal[0]['amount'],
-				'item_category_id' => $combo_goal[0]['item_category_id']
-			];
 			$live_combo_rank = $combo_goal[0]['rank'];
+			
+			if($last_live_data['combo'] < $combo_goal[1])
+			{
+				item_collect($USER_ID, $combo_goal[0]['add_type'], $combo_goal[0]['item_id'], $combo_goal[0]['amount']);
+				
+				$cleared_live_goals[] = $combo_goal[0]['live_goal_reward_id'];
+				$cleared_live_rewards[] = [
+					'item_id' => $combo_goal[0]['item_id'],
+					'add_type' => $combo_goal[0]['add_type'],
+					'amount' => $combo_goal[0]['amount'],
+					'item_category_id' => $combo_goal[0]['item_category_id']
+				];
+			}
 		}
 	}
 	
@@ -217,21 +227,21 @@ $cleared_live_rewards = [];
 	// modify last live table
 	$put_score = max($score_total, $last_live_data['score']);
 	$put_combo = max($max_combo, $last_live_data['combo']);
-	npps_query("REPLACE INTO `{$player_tables['live_table']}` VALUES($live_difficulty_id, {$last_live_data['normal']}, $put_score, $put_combo, $play_times");
+	npps_query("REPLACE INTO `{$player_tables['live_table']}` VALUES($live_difficulty_id, {$last_live_data['normal']}, $put_score, $put_combo, $play_times)");
 }
 
 // increase EXP, add gold, and add FP
 $player_data_info = NULL;
 $player_exp = 0;
 $player_gained_fp = 5;
-$player_gained_gold = $live_coin_table[$live_score_rank][min($live_difficulty_level, 4) - 1];
+$player_gained_gold = $live_coin_table[$live_score_rank - 1][min($live_difficulty_level, 4) - 1];
 $player_exp_unit_max = 90;
 {
 	if($live_score_rank == 5)
 		// half exp
 		$player_exp = intval(ceil($player_exp / 2));
 	
-	if(array_search(strval($guest_user_id), explode(',', $player_tables['friend_list']) ?: []) !== false)
+	if(array_search(strval($live_guest_id), explode(',', $player_tables['friend_list']) ?: []) !== false)
 		$player_gained_fp = 10;
 	
 	$player_exp_unit_max = npps_query("SELECT max_unit FROM `users` WHERE user_id = $USER_ID")[0][0];
@@ -253,7 +263,7 @@ $common_present_box_data = [
 {
 	// Live clear
 	$member = card_random_regular();
-	$member['add_type'] = 1001,
+	$member['add_type'] = 1001;
 	$member['unit_owning_user_id'] = card_add($USER_ID, $member['unit_id'], $common_present_box_data);
 	if($member['unit_owning_user_id'] == 0)
 		$member['unit_owning_user_id'] = token_use_pseudo_unit_own_id($TOKEN);
@@ -264,7 +274,7 @@ $common_present_box_data = [
 	if($live_score_rank < 5)
 	{
 		$member = card_random_regular();
-		$member['add_type'] = 1001,
+		$member['add_type'] = 1001;
 		$member['unit_owning_user_id'] = card_add($USER_ID, $member['unit_id'], $common_present_box_data);
 		if($member['unit_owning_user_id'] == 0)
 			$member['unit_owning_user_id'] = token_use_pseudo_unit_own_id($TOKEN);
@@ -276,7 +286,7 @@ $common_present_box_data = [
 	if($live_combo_rank > 0)
 	{
 		$member = card_random_regular();
-		$member['add_type'] = 1001,
+		$member['add_type'] = 1001;
 		$member['unit_owning_user_id'] = card_add($USER_ID, $member['unit_id'], $common_present_box_data);
 		if($member['unit_owning_user_id'] == 0)
 			$member['unit_owning_user_id'] = token_use_pseudo_unit_own_id($TOKEN);
@@ -286,7 +296,124 @@ $common_present_box_data = [
 }
 
 // Calculate bond
+$deck_data = [];
+$unlocked_subscenario = [];
 {
+	$remaining_bond = $love_cnt;
+	
+	// get current deck
+	{
+		$unit_ids = explode(':', npps_query("SELECT deck_members FROM `{$player_tables['deck_table']}` WHERE deck_num = $used_deck_id")[0][0]);
+		
+		// convert unit_ids to number
+		array_walk($unit_ids, function(&$v, $k)
+		{
+			$v = intval($v);
+		});
+		
+		$comma_separated_units = implode(',', $unit_ids);
+		// FIXME: It needs to be converted from unit_owning_user_id to unit_id
+		$units = npps_query("SELECT * FROM `{$player_tables['unit_table']}` WHERE card_id IN($comma_separated_units) ".$DATABASE->custom_ordering('card_id', $unit_ids));
+		
+		foreach($units as $i => $unit)
+		{
+			$unit_info = $unit_db->execute_query("SELECT after_level_max, after_love_max FROM `unit_m` WHERE unit_id = {$unit['card_id']}")[0];
+			
+			$deck_data[] = [
+				'unit_owning_user_id' => $unit['unit_id'],
+				'unit_id' => $unit['card_id'],
+				'position' => $i + 1,
+				'level' => $unit['level'],
+				'unit_skill_level' => $unit['skill_level'],
+				'before_love' => $unit['bond'],
+				'love' => $unit['bond'],
+				'max_love' => $unit['max_bond'],
+				'is_rank_max' => $unit['max_bond'] >= $unit_info['after_love_max'],
+				'is_love_max' => $unit['bond'] >= $unit_info['after_love_max'],
+				'is_level_max' => $unit['level'] >= $unit_info['after_level_max']
+			];
+		}
+	}
+	
+	// now calculate
+	$center_bond = intdiv($remaining_bond * 7, 10);
+	$remaining_bond -= $center_bond;
+	
+	// add to leader
+	$deck_data[4]['love'] += $center_bond;
+	// add remaining_bond back if there's leftover
+	$remaining_bond += max($deck_data[4]['love'] - $deck_data[4]['max_love'], 0);
+	
+	// calculate for the rest of the members
+	$bond_finish_calculate = false;
+	$common_bond_pos_arr = [0, 1, 2, 3, 5, 6, 7, 8];
+	while($remaining_bond > 0 && $bond_finish_calculate == false)
+	{
+		$bond_finish_calculate = true;
+		
+		foreach($common_bond_pos_arr as $pos)
+		{
+			if($remaining_bond > 0)
+				if($deck_data[$pos]['love'] < $deck_data[$pos]['max_love'])
+				{
+					$deck_data[$pos]['love']++;
+					$remaining_bond--;
+					$bond_finish_calculate = false;
+				}
+			else
+				break;
+		}
+	}
+	
+	// if there's leftover again, give it to center
+	if($remaining_bond > 0)
+		$deck_data[4]['love'] = min($deck_data[4]['love'] + $remaining_love, $deck_data[$pos]['max_love']);
+	
+	// update is_love_max table and update database and album
+	npps_query('BEGIN');
+	foreach($deck_data as &$unit)
+	{
+		$unit['is_love_max'] = $unit['is_rank_max'] ? ($unit['love'] >= $unit['max_love']) : false;
+		$album_data = npps_query("SELECT total_bond, flags FROM `{$player_tables['album_table']}` WHERE card_id = {$unit['unit_id']}")[0];
+		
+		$album_data['total_bond'] += $unit['love'] - $unit['before_love'];
+		$album_data['flags'] |= ($unit['is_love_max'] ? 4 : 0);
+		
+		if($unit['is_love_max'])
+		{
+			// unlock subscenario
+			$subscenario = user_subscenario_unlock($USER_ID, $unit['unit_id']);
+			
+			if($subscenario > 0)
+				$unlocked_subscenario[] = $subscenario;
+		}
+		
+		npps_query("UPDATE `{$player_tables['album_table']}` SET flags = ?, total_bond = ? WHERE card_id = {$unit['unit_id']}",
+			'ii', $album_data['flags'], $album_data['total_bond']);
+		npps_query("UPDATE `{$player_tables['unit_table']}` SET bond = {$unit['love']} WHERE unit_id = {$unit['unit_owning_user_id']}");
+	}
+	npps_query('COMMIT');
+}
+
+// next_level_info data
+$next_level_info_data = [];
+{
+	if($player_data_info['before']['level'] == $player_data_info['after']['level'])
+		$next_level_info_data[] = [
+			'level' => $player_data_info['before']['level'],
+			'from_exp' => user_exp_requirement_recursive($player_data_info['before']['level'] - 1) + $player_data_info['before']['exp']
+		];
+	else
+	{
+		$next_level_info_data[] = [
+			'level' => $player_data_info['before']['level'],
+			'from_exp' => user_exp_requirement_recursive($player_data_info['before']['level'] - 1) + $player_data_info['before']['exp']
+		];
+		$next_level_info_data[] = [
+			'level' => $player_data_info['after']['level'],
+			'from_exp' => user_exp_requirement($player_data_info['after']['level'] - 1) + $player_data_info['after']['exp']
+		];
+	}
 }
 
 // return data
@@ -297,12 +424,12 @@ return [
 		'combo_rank' => $live_combo_rank,
 		'total_love' => $love_cnt,
 		'is_high_score' => $score_total > $last_live_data['score'],
-		'hi_score' => $last_live_data['score'];
+		'hi_score' => $last_live_data['score'],
 		'base_reward_info' => [
 			'player_exp' => $player_exp,
 			'player_exp_unit_max' => [
 				// TODO
-				'before' => $player_exp_unit_max
+				'before' => $player_exp_unit_max,
 				'after' => $player_exp_unit_max
 			],
 			'player_exp_friend_max' => [
@@ -318,7 +445,17 @@ return [
 			'social_point' => $player_gained_fp
 		],
 		'reward_unit_list' => $reward_members,
-		
+		'unlocked_subscenario_ids' => $unlocked_subscenario,
+		'unit_list' => $deck_data,
+		'before_user_info' => $before_user_info,
+		'after_user_info' => user_current_info($USER_ID),
+		'next_level_info' => $next_level_info_data,
+		'goal_accomp_info' => [
+			'achieved_ids' => $cleared_live_goals,
+			'rewards' => $cleared_live_rewards
+		],
+		'special_reward_info' => [],	// TODO
+		'event_info' => [],				// TODO
 	],
 	200
 ];

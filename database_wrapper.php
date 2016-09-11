@@ -291,6 +291,8 @@ class SQLite3Database extends DatabaseWrapper
 		if(file_exists(".sqlite3_initialized"))
 			return;
 		
+		fclose(fopen(DBWRAPPER_MYSQL_DB.'.db', 'w'));
+		
 		if(!defined('DEBUG_ENVIRONMENT'))
 			if($this->db_handle->version()['versionNumber'] < 3007000)
 				throw new Exception('SQLite3 database wrapper requires SQLite v3.7.0 or later!');
@@ -310,6 +312,8 @@ class SQLite3Database extends DatabaseWrapper
 		
 		if(isset($values[0]) && is_array($values[0]))
 			$values = $values[0];
+		
+		var_dump($query);
 		
 		if($types != NULL)
 		{

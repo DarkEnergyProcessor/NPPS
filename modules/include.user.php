@@ -8,6 +8,8 @@
 /* Returns the User ID or 0 if fail */
 function user_create(string $key, string $pwd): int
 {
+	global $UNIX_TIMESTAMP;
+	
 	$unix_ts = $UNIX_TIMESTAMP;
 	$user_data = [
 		$key,		// login_key
@@ -62,7 +64,8 @@ CREATE TABLE `present_$user_id` (
 	card_num INTEGER,								-- The card internal ID (can be other ID) or NULL.
 	amount INTEGER NOT NULL,						-- Amount of the item
 	message TEXT NOT NULL,							-- Additional message like: "Event achievement reward"
-	expire INTEGER DEFAULT NULL						-- Unix timestamp when the item expire or NULL for no expiration
+	expire INTEGER DEFAULT NULL,					-- Unix timestamp when the item expire or NULL for no expiration
+	collected INTEGER DEFAULT NULL					-- Unix timestamp for when the item was collected or NULL for not collected
 );
 CREATE TABLE `information_$user_id` (
 	info_pos INTEGER PRIMARY KEY AUTO_INCREMENT,	-- Information position
@@ -253,7 +256,19 @@ function user_exp_requirement(int $rank): int
 {
 	if($rank <= 0) return 0;
 	
-	return floor((21 + $rank ** 2.12) / 2 + 0.5);
+	return intval(floor((21 + $rank ** 2.12) / 2 + 0.5));
+}
+
+function user_exp_requirement_recursive(int $rank): int
+{
+	if($rank <= 0) return 0;
+	
+	$sum = 0;
+	
+	for($i = 1; $i <= $rank; $i++)
+		$sum += user_exp_requirement($i);
+	
+	return $sum;
 }
 
 /* Retrieve icon user info */
@@ -478,4 +493,35 @@ function user_sub_loveca(int $user_id, int $amount): bool
 			return false;
 	
 	return !!npps_query('UPDATE `users` SET paid_loveca = ?, free_loveca = ? WHERE user_id = ?', 'iii', $loveca['paid_loveca'], $loveca['free_loveca'], $user_id);
+}
+
+/* returns the subscenario id, 0 if already unlocked, -1 on fail */
+function user_subscenario_unlock(int $user_id, int $unit_id): int
+{
+	$subscenario_db = npps_get_database('subscenario');
+	$subscenario_tracking = npps_query("SELECT subscenario_tracking FROM `users` WHERE user_id = $user_id")[0]['subscenario_tracking'];
+	$subscenario_data = strlen($subscenario_tracking) > 0 ? explode(',', $subscenario_tracking) : [];
+	$subscenario_id = $subscenario_db->execute_query("SELECT subscenario_id FROM `subscenario_m` WHERE unit_id = $unit_id");
+	
+	if(count($subscenario_id) > 0)
+		$subscenario_id = $subscenario_id[0]['subscenario_id'];
+	else
+		return -1;
+	
+	$is_unlocked = false;
+	array_walk($subscenario_data, function($v, $k) use($subscenario_id, &$is_unlocked)
+		{
+			if($is_unlocked == false && (strcmp(strval($v), strval($subscenario_id)) == 0 || strcmp(strval($v), "!$subscenario_id") == 0))
+				$is_unlocked = true;
+		}
+	);
+	
+	if($is_unlocked)
+		return 0;
+	
+	$subscenario_data[] = strval($subscenario_id);
+	npps_query("UPDATE `users` SET subscenario_tracking = ? WHERE user_id = $user_id",
+		's', implode(',', $subscenario_data));
+	
+	return $subscenario_id;
 }

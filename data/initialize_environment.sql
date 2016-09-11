@@ -31,6 +31,11 @@ CREATE TABLE `coupon_secretbox_list` (				-- With scouting coupon
 	sr_chance DECIMAL(6,3) NOT NULL DEFAULT 80.000,	-- The chance for SR to appear. 80% by default
 	ur_chance DECIMAL(6,3) NOT NULL DEFAULT 20.000	-- The chance for UR to appear. 20% by default
 );
+CREATE TABLE `secretbox_card_preview` (
+	secretbox_id INTEGER NOT NULL,					-- Secretbox ID. For coupon, secretbox_id will be coupon_secretbox_id * 65536
+	card_id INTEGER NOT NULL,						-- Target unit ID
+	card_preview_path TEXT NOT NULL					-- Card preview image path in client
+);
 CREATE TABLE `event_list` (
 	event_id INTEGER PRIMARY KEY,						-- The event ID from event_common.db_
 	event_start INTEGER NOT NULL DEFAULT 0,				-- Unix timestamp when the event start
@@ -151,6 +156,11 @@ CREATE TABLE `wip_live` (
 	live_data TEXT DEFAULT NULL,		-- Live-specific related data
 	started INTEGER NOT NULL			-- Used to prevent people from completing live too fast
 );
+CREATE TABLE `wip_scenario` (
+	user_id INTEGER NOT NULL,				-- User ID who started the scenario/subscenario
+	scenario_id INTEGER DEFAULT NULL,		-- Scenario ID or NULL if it's subscenario
+	subscenario_id INTEGER DEFAULT NULL		-- Subscenario ID or NULL if it's scenario
+);
 CREATE TABLE `free_gacha_tracking` (
 	user_id INTEGER NOT NULL PRIMARY KEY,	-- User ID who execute the free gacha
 	next_free_gacha INTEGER NOT NULL		-- Unix timestamp when the next free gacha.
@@ -190,7 +200,8 @@ CREATE TABLE `present_$user_id` (
 	card_num INTEGER,								-- The card internal ID (can be other ID) or NULL.
 	amount INTEGER NOT NULL,						-- Amount of the item
 	message TEXT NOT NULL,							-- Additional message like: "Event achievement reward"
-	expire INTEGER DEFAULT NULL						-- Unix timestamp when the item expire or NULL for no expiration
+	expire INTEGER DEFAULT NULL,					-- Unix timestamp when the item expire or NULL for no expiration
+	collected INTEGER DEFAULT NULL					-- Unix timestamp for when the item was collected or NULL for not collected
 );
 CREATE TABLE `information_$user_id` (
 	info_pos INTEGER PRIMARY KEY AUTO_INCREMENT,	-- Information position

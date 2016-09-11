@@ -1,6 +1,6 @@
 <?php
 $unit_db = npps_get_database('unit');
-$some_tables = $DATABASE->execute_query("SELECT unit_table, deck_table, gold, level, current_exp, next_exp, paid_loveca + free_loveca, friend_point, max_unit, max_lp, max_friend, album_table FROM `users` WHERE user_id = $USER_ID")[0];
+$some_tables = npps_query("SELECT unit_table, deck_table, gold, level, current_exp, next_exp, paid_loveca + free_loveca, friend_point, max_unit, max_lp, max_friend, album_table FROM `users` WHERE user_id = $USER_ID")[0];
 $unit_table = $some_tables[0];
 $deck_table = $some_tables[1];
 $album_table = $some_tables[11];
@@ -14,7 +14,7 @@ if(count($practice_list) == 0 || $practice_base == 0)
 	return false;
 }
 
-$base_before = $DATABASE->execute_query("SELECT * FROM `$unit_table` WHERE unit_id = $practice_base")[0];
+$base_before = npps_query("SELECT * FROM `$unit_table` WHERE unit_id = $practice_base")[0];
 $base_rarity = 1;
 $base_idolized = false;
 $base_promo = false;
@@ -62,7 +62,7 @@ foreach($practice_list as $used_own_id)
 		return false;
 	}
 	
-	$unit_id = $DATABASE->execute_query("SELECT card_id, level, max_level FROM `$unit_table` WHERE unit_id = ?", 'i', $used_own_id)[0];
+	$unit_id = npps_query("SELECT card_id, level, max_level FROM `$unit_table` WHERE unit_id = ?", 'i', $used_own_id)[0];
 	$unit_info = $unit_db->execute_query("SELECT unit_level_up_pattern_id, attribute_id, rarity, default_unit_skill_id, normal_card_id, rank_max_card_id, disable_rank_up, before_level_max FROM `unit_m` WHERE unit_id = {$unit_id[0]}")[0];
 	$merge_info = $unit_db->execute_query("SELECT merge_exp, merge_cost FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = {$unit_info[0]} AND unit_level == {$unit_id[1]}")[0];
 	$unit_idolized = $unit_id[2] > $unit_info[7];
@@ -130,7 +130,7 @@ foreach($practice_list as $practice_unit_id)
 	card_remove($USER_ID, intval($practice_unit_id));
 
 /* Deduce player money and add seals*/
-$DATABASE->execute_query("UPDATE `users` SET gold = gold - $needed_gold, normal_sticker = normal_sticker + {$seal_gained[0]}, silver_sticker = silver_sticker + {$seal_gained[1]}, gold_sticker = gold_sticker + {$seal_gained[2]} WHERE user_id = $USER_ID");
+npps_query("UPDATE `users` SET gold = gold - $needed_gold, normal_sticker = normal_sticker + {$seal_gained[0]}, silver_sticker = silver_sticker + {$seal_gained[1]}, gold_sticker = gold_sticker + {$seal_gained[2]} WHERE user_id = $USER_ID");
 
 /* Calculate Super Success or Ultra Success */
 $practice_bonus = 1;
@@ -176,7 +176,7 @@ $new_card_level = $base_before[4];
 $skill_level_exp = $total_skill_gained + $base_before[7];
 $new_skill_level = $base_before[6];
 
-while($skill_level_exp >= $new_skill_level)
+while($skill_level_exp >= 2 ** ($new_skill_level - 1))
 	$skill_level_exp -= $new_skill_level++;
 
 if($new_skill_level >= 8)
@@ -189,15 +189,15 @@ $new_max_level = $new_card_level >= $base_max_level;
 $new_after_exp = $new_max_level ? $limit_exp : $base_before[2] + $total_gained_exp;
 
 /* Update card */
-$DATABASE->execute_query("UPDATE `$unit_table` SET level = ?, current_exp = ?, next_exp = ?, skill_level = ?, skill_level_exp = ?, health_points = ? WHERE unit_id = $practice_base", 'iiiiii', $new_card_level, $new_after_exp, $next_exp, $new_skill_level, $skill_level_exp, $new_hp);
+npps_query("UPDATE `$unit_table` SET level = ?, current_exp = ?, next_exp = ?, skill_level = ?, skill_level_exp = ?, health_points = ? WHERE unit_id = $practice_base", 'iiiiii', $new_card_level, $new_after_exp, $next_exp, $new_skill_level, $skill_level_exp, $new_hp);
 
 /* Update album if max level */
 if($new_max_level && $base_idolized)
 {
-	$temp_album_data = $DATABASE->execute_query("SELECT flags FROM `$album_table` WHERE card_id = {$base_before[1]}")[0][0];
+	$temp_album_data = npps_query("SELECT flags FROM `$album_table` WHERE card_id = {$base_before[1]}")[0][0];
 	
 	if(($temp_album_data & 8) == 0)
-		$DATABASE->execute_query("UPDATE `$album_table` SET flags = ? WHERE card_id = ?", 'ii', $temp_album_data | 8, $base_before[1]);
+		npps_query("UPDATE `$album_table` SET flags = ? WHERE card_id = ?", 'ii', $temp_album_data | 8, $base_before[1]);
 }
 
 /* Send response seal */
@@ -282,4 +282,3 @@ return [
 	],
 	200
 ];
-?>

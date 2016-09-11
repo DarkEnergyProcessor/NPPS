@@ -1,5 +1,5 @@
 <?php
-$present_count = $DATABASE->execute_query('SELECT COUNT(item_pos) FROM `'.$DATABASE->execute_query("SELECT present_table FROM `users` WHERE user_id = $USER_ID")[0][0].'`')[0][0];
+$present_count = $DATABASE->execute_query('SELECT COUNT(item_pos) FROM `'.$DATABASE->execute_query("SELECT present_table FROM `users` WHERE user_id = $USER_ID")[0][0].'` WHERE `collected` IS NULL')[0][0];
 $pm_count = $DATABASE->execute_query("SELECT COUNT(notice_id) FROM `notice_list` WHERE receiver_user_id = $USER_ID AND is_pm = 1")[0][0];
 $activity_count = $DATABASE->execute_query("SELECT COUNT(notice_id) FROM `notice_list` WHERE receiver_user_id = $USER_ID AND is_pm = 0")[0][0];
 $is_free_gacha = true;

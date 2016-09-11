@@ -110,7 +110,7 @@ function card_random_regular(): array
 		
 		foreach($unit_db->execute_query('SELECT unit_id, unit_level_up_pattern_id, hp_max, rarity, before_love_max, before_level_max FROM `unit_m` WHERE rarity < 3 AND normal_card_id <> rank_max_card_id') as $x)
 		{
-			$level_up_pattern = $unit_db->execute_query("SELECT next_exp, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_m = {$x['unit_level_up_pattern_m']}")[0];
+			$level_up_pattern = $unit_db->execute_query("SELECT next_exp, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = {$x['unit_level_up_pattern_id']}")[0];
 			
 			$unit_data = [
 				'unit_owning_user_id' => 0,
@@ -126,8 +126,8 @@ function card_random_regular(): array
 				'skill_level' => 1,
 				'max_hp' => $x['hp_max'] - $level_up_pattern['hp_diff'],
 				'is_rank_max' => false,
-				'is_love_max' => $is_idolized ? $unit[9] >= $unit[10] : false,
-				'is_level_max' => $is_idolized ? $unit[4] >= $unit[5] : false
+				'is_love_max' => false,
+				'is_level_max' => false
 			];
 			
 			switch($x['rarity'])

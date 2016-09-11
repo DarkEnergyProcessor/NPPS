@@ -1,13 +1,15 @@
 Null-Pointer Private Server
 ==========================================
 
-If you want to know more about this SIF private server, please see Design.txt
+This is currentmy most flexible private server (I think) ever created.
 
-It doesn't use any framework so it's lightweight. While it's lightweight, it will be designed to be flexible.
+The private server code is written entirely from stratch, without using any framework.
 
 ###System Requirements
 
 * PHP 7. MANDATORY!!!
+
+* MBString PHP extension.
 
 * SQLite3 (or later) PHP module. SQLite v3.7.0 or later is required if you're using SQLite3 as DB backend.
 
@@ -15,10 +17,12 @@ It doesn't use any framework so it's lightweight. While it's lightweight, it wil
 
 * For Windows: Windows 7 SP1 or Windows Server 2008 R2 SP1 with latest updates (because you can't run PHP 7 in the earlier Windows version). Windows 8.1 or Windows Server 2012 is recommended.
 
-* For Ubuntu: Ubuntu 16.04, but using 14.04 is possible with [Ondřej Surý PPA](https://launchpad.net/~ondrej/+archive/ubuntu/php) to install PHP 7 and it's modules.
+* For Ubuntu: Ubuntu 16.04 (with simple `apt-get`), or 14.04 with [Ondřej Surý PPA](https://launchpad.net/~ondrej/+archive/ubuntu/php) to install PHP 7 and it's modules.
+
+* For Mac OS X 10.6 and above: [use this method](http://php-osx.liip.ch/). **64-bit only**. This one is untested.
 
 ###Some Notes
 
-* You don't need to do special preparation. Just clone, create web server with document root set to this directory, and visit.
+* You don't need to do special preparation. Just clone, install necessary requirements above, create web server with document root set to this directory, and visit.
 
 * Hosting it under Linux is recommended and will gain 2x more speed than hosting it under Windows.
