@@ -30,7 +30,7 @@ $live_table = $DATABASE->execute_query("SELECT live_table FROM `users` WHERE use
 
 foreach($DATABASE->execute_query("SELECT live_id FROM `$live_table` WHERE times > 0") as $lid)
 {
-	$setting_id = $get_live_setting_id($sid[0]);
+	$setting_id = $get_live_setting_id($lid[0]);
 	$diff = $live_db->execute_query("SELECT difficulty FROM `live_setting_m` WHERE live_setting_id = $setting_id")[0][0];
 	
 	switch($diff)

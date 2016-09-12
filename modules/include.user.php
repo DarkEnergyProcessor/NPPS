@@ -400,7 +400,7 @@ function user_add_exp(int $user_id, int $exp): array
 {
 	$before_rank_up = npps_query("SELECT level, current_exp, max_lp, max_friend FROM `users` WHERE user_id = $user_id")[0];
 	$current_level = $before_rank_up[0];
-	$need_exp = user_exp_requirement($before_rank_up[0]);
+	$need_exp = user_exp_requirement_recursive($before_rank_up[0]);
 	$now_exp = $before_rank_up[1] + $exp;
 	
 	while($now_exp >= $need_exp)

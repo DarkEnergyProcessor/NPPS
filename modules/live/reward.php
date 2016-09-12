@@ -8,11 +8,11 @@ $is_int_list = function(int& ...$varlist): bool
 	return true;
 };
 
-$live_coin_table = [	// index: [score][difficulty]
-	[2250, 3000, 3750, 4500],
-	[1800, 2400, 3000, 3600],
-	[1200, 1600, 2000, 2400],
+$live_coin_table = [	// index: [score_rank][difficulty]
 	[600 , 800 , 1000, 1200],
+	[1200, 1600, 2000, 2400],
+	[1800, 2400, 3000, 3600],
+	[2250, 3000, 3750, 4500],
 	[300 , 400 , 500 , 600 ]
 ];
 $live_exp_table = [12, 26, 43, 83];
@@ -56,6 +56,7 @@ $live_setting_id = 0;
 $live_difficulty_level = 1;	// not live_difficulty_id
 $live_guest_id = 0;
 $used_deck_id = 0;
+$player_exp = 0;
 
 // get data from WIP live
 {
@@ -96,7 +97,7 @@ $used_deck_id = 0;
 		'live_difficulty_id' => $live_difficulty_id,
 		'is_random' => $live_data['random_flag'] > 0,
 		'dangerous' => $stage_data['stage_level'] > 10,
-		'use_quad_point' => $live_data['special_setting']
+		'use_quad_point' => $live_data['special_setting'] > 0
 	];
 	$live_setting_id = $live_data['live_setting_id'];
 	$live_guest_id = $wip_live['guest_user_id'];
@@ -232,7 +233,6 @@ $cleared_live_rewards = [];
 
 // increase EXP, add gold, and add FP
 $player_data_info = NULL;
-$player_exp = 0;
 $player_gained_fp = 5;
 $player_gained_gold = $live_coin_table[$live_score_rank - 1][min($live_difficulty_level, 4) - 1];
 $player_exp_unit_max = 90;
@@ -312,8 +312,7 @@ $unlocked_subscenario = [];
 		});
 		
 		$comma_separated_units = implode(',', $unit_ids);
-		// FIXME: It needs to be converted from unit_owning_user_id to unit_id
-		$units = npps_query("SELECT * FROM `{$player_tables['unit_table']}` WHERE card_id IN($comma_separated_units) ".$DATABASE->custom_ordering('card_id', $unit_ids));
+		$units = npps_query("SELECT * FROM `{$player_tables['unit_table']}` WHERE unit_id IN($comma_separated_units) ".$DATABASE->custom_ordering('unit_id', $unit_ids));
 		
 		foreach($units as $i => $unit)
 		{
@@ -415,6 +414,15 @@ $next_level_info_data = [];
 		];
 	}
 }
+
+// TODO: Add token event support
+
+// transform score rank and combo rank
+if($live_score_rank < 5)
+	$live_score_rank = 5 - $live_score_rank;
+
+if($live_combo_rank > 0)
+	$live_combo_rank = 5 - $live_combo_rank;
 
 // return data
 return [

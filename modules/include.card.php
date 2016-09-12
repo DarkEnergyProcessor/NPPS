@@ -151,7 +151,7 @@ function card_random_regular(): array
 	
 	// 10% R, 90% N
 	if(random_int(0, 100000) / 1000 - 90.0 <= 0.0)
-		return $r_list[random_int(0, count($r_list) - 1)];
+		return $n_list[random_int(0, count($r_list) - 1)];
 	else
-		return $n_list[random_int(0, count($n_list) - 1)];
+		return $r_list[random_int(0, count($n_list) - 1)];
 }

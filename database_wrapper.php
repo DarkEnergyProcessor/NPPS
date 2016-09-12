@@ -313,8 +313,6 @@ class SQLite3Database extends DatabaseWrapper
 		if(isset($values[0]) && is_array($values[0]))
 			$values = $values[0];
 		
-		var_dump($query);
-		
 		if($types != NULL)
 		{
 			if($stmt = $this->db_handle->prepare($query))
