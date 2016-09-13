@@ -1,6 +1,6 @@
 <?php
-$friend_list = $DATABASE->execute_query("SELECT friend_list FROM `users` WHERE user_id = $USER_ID")[0][0];
-$random_people = $DATABASE->execute_query("SELECT user_id FROM `users` WHERE level > 1 AND user_id <> $USER_ID AND user_id NOT IN($friend_list) ORDER BY RANDOM() LIMIT 3");
+$friend_list = npps_query("SELECT friend_list FROM `users` WHERE user_id = $USER_ID")[0][0];
+$random_people = npps_query("SELECT user_id FROM `users` WHERE level > 1 AND user_id <> $USER_ID AND user_id NOT IN($friend_list) ORDER BY RANDOM() LIMIT 3");
 $unit_db = npps_get_database('unit');
 $live_db = npps_get_database('live');
 $live_id = intval($REQUEST_DATA['live_difficulty_id'] ?? 0);
@@ -39,22 +39,24 @@ $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`
 		{
 			$current_token = 0;
 			$needed_token = $temp['capital_value'];
-			$ev = $DATABASE->execute_query("SELECT event_ranking_table FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP");
+			$ev_rank_table = npps_query("SELECT event_ranking_table FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP");
 			
 			// get current token
-			if(count($ev) == 0)
+			if(count($ev_rank_table) == 0)
 			{
 				echo 'No active event!';
 				return false;
 			}
+			else
+				$ev_rank_table = $ev_rank_table[0][0];
 			
-			$user_event_info = $DATABASE->execute_query("SELECT current_token FROM `{$ev['event_ranking_table']}` WHERE user_id = $USER_ID");
+			$user_event_info = npps_query("SELECT current_token FROM `$ev_rank_table` WHERE user_id = $USER_ID");
 			
 			if(count($user_event_info) > 0)
 				$current_token = $user_event_info['current_token'];
 			
 			if($current_token < $needed_token)
-				return ERROR_CODE_LIVE_NOT_ENOUGH_CURRENT_ENERGY;
+				return 3412;	// Not enough token
 			break;
 		}
 	}

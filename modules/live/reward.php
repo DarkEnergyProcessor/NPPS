@@ -153,7 +153,7 @@ $last_live_data = [
 	];
 	
 	foreach($goal_list as $goal)
-		$live_data_goals[$goal['live_goal_type'] - 1][$goal['rank'] - 1][0] = $goal;
+		$live_data_goals[$goal['live_goal_type'] - 1][4 - $goal['rank']][0] = $goal;
 }
 
 
@@ -366,7 +366,7 @@ $unlocked_subscenario = [];
 	
 	// if there's leftover again, give it to center
 	if($remaining_bond > 0)
-		$deck_data[4]['love'] = min($deck_data[4]['love'] + $remaining_love, $deck_data[$pos]['max_love']);
+		$deck_data[4]['love'] = min($deck_data[4]['love'] + $remaining_bond, $deck_data[$pos]['max_love']);
 	
 	// update is_love_max table and update database and album
 	npps_query('BEGIN');
@@ -415,14 +415,87 @@ $next_level_info_data = [];
 	}
 }
 
-// TODO: Add token event support
-
 // transform score rank and combo rank
 if($live_score_rank < 5)
 	$live_score_rank = 5 - $live_score_rank;
 
 if($live_combo_rank > 0)
 	$live_combo_rank = 5 - $live_combo_rank;
+
+// Calculate event points
+// Source: http://decaf.kouhi.me/lovelive/index.php?title=Gameplay#New_events_.28after_June_5.2C_2016.29
+$event_points_table = [	// [difficulty][score_rank][combo_rank]
+	[
+		// Easy
+		// Format: no combo, S combo, A combo, B combo, C combo
+		[66, 71, 70, 69, 67],	// S score
+		[64, 70, 68, 66, 65],	// A score
+		[63, 68, 66, 65, 64],	// B score
+		[60, 64, 63, 62, 61],	// C score
+		[57, 61, 60, 59, 58]	// Less than C score
+	],
+	[
+		// Normal
+		[137, 148, 145, 143, 140],
+		[133, 143, 140, 137, 135],
+		[125, 137, 135, 132, 129],
+		[121, 131, 128, 126, 123],
+		[114, 124, 122, 120, 117]
+	],
+	[
+		// Hard
+		[237, 261, 254, 246, 241],
+		[226, 249, 242, 235, 230],
+		[215, 237, 231, 224, 220],
+		[204, 226, 219, 213, 209],
+		[194, 214, 207, 202, 197]
+	],
+	[
+		// Expert and above
+		[498, 565, 549, 518, 508],
+		[475, 540, 525, 495, 485],
+		[448, 509, 495, 467, 458],
+		[426, 484, 470, 444, 435],
+		[403, 459, 446, 421, 413]
+	]
+];
+$event_info_data = [];
+// TODO: Complete it!!!
+/*
+if($event_id > 0)
+{
+	$event_db = npps_get_database('event');
+	$event_data = npps_query(
+<<<QUERY
+	SELECT  easy_song_list, normal_song_list, hard_song_list, expert_song_list, event_ranking_data, event_song_data
+	FROM `event_list` WHERE
+		event_id = $event_id AND
+		event_start <= $UNIX_TIMESTAMP AND
+		event_end > $UNIX_TIMESTAMP AND
+		token_image IS NOT NULL
+QUERY;
+	);
+	
+	if(count($event_data) > 0)
+	{
+		$event_info_data = [
+			'event_id' => $event_id,
+			
+		];
+		$easylist = npps_separate(',', $event_data['easy_song_list']);
+		$normallist = npps_separate(',', $event_data['normal_song_list']);
+		$hardlist = npps_separate(',', $event_data['hard_song_list']);
+		$expertlist = npps_separate(',', $event_data['expert_song_list']);
+		
+		if(array_search($live_difficulty_id, $easylist) !== false ||
+		   array_search($live_difficulty_id, $normallist) !== false ||
+		   array_search($live_difficulty_id, $hardlist) !== false ||
+		   array_search($live_difficulty_id, $expertlist) !== false)
+		{
+			// event song is in progress
+		}
+	}
+}*/
 
 // return data
 return [
@@ -432,7 +505,7 @@ return [
 		'combo_rank' => $live_combo_rank,
 		'total_love' => $love_cnt,
 		'is_high_score' => $score_total > $last_live_data['score'],
-		'hi_score' => $last_live_data['score'],
+		'hi_score' => max($last_live_data['score'], $score_total),
 		'base_reward_info' => [
 			'player_exp' => $player_exp,
 			'player_exp_unit_max' => [
@@ -463,7 +536,7 @@ return [
 			'rewards' => $cleared_live_rewards
 		],
 		'special_reward_info' => [],	// TODO
-		'event_info' => [],				// TODO
+		'event_info' => $event_info_data,
 	],
 	200
 ];

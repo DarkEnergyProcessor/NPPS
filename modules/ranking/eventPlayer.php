@@ -20,9 +20,4 @@ if(count($ranking_table) == 0)
 	return false;
 }*/
 
-return [
-	[
-		'error_code' => 1602,
-	],
-	600
-];
+return 1602;	// ranking hasn't been calculated

@@ -93,6 +93,24 @@ function npps_query(string $query, string $list = NULL, ...$arglist)
 		return $DATABASE->execute_query($query);
 }
 
+function npps_separate(string $delimiter, string $str): array
+{
+	if(strlen($str) > 0)
+	{
+		$datalist = explode($delimiter, $str);
+		
+		array_walk($datalist, function(&$v, $k)
+		{
+			if(is_numeric($v))
+				$v = $v + 0;
+		});
+		
+		return $datalist;
+	}
+	
+	return [];
+}
+
 require('modules/include.card.php');
 require('modules/include.deck.php');
 require('modules/include.item.php');
