@@ -8,6 +8,10 @@ $party_list_out = [];
 
 $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`');
 
+// verify live existence
+if(live_search($USER_ID, $live_difficulty_id) == false)
+	return ERROR_CODE_LIVE_NOT_FOUND;
+
 // verify live cost
 {
 	$temp = $live_db->execute_query("SELECT live_setting_id, capital_type, capital_value, random_flag, special_setting FROM (
@@ -56,7 +60,7 @@ $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`
 				$current_token = $user_event_info['current_token'];
 			
 			if($current_token < $needed_token)
-				return 3412;	// Not enough token
+				return ERROR_CODE_LIVE_NOT_ENOUGH_TOKEN;
 			break;
 		}
 	}

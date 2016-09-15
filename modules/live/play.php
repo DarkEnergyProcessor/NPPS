@@ -9,12 +9,18 @@ if($live_id == 0 || $deck_id == 0 || $party_user_id == 0)
 	return false;
 }
 
+// Only 1 live show can be done at time
 if(count($DATABASE->execute_query("SELECT live_id FROM `wip_live` WHERE user_id = $USER_ID")) > 0)
 {
 	echo 'Another live is in progress!';
 	return false;
 }
 
+// verify live existence
+if(live_search($USER_ID, $live_difficulty_id) == false)
+	return ERROR_CODE_LIVE_NOT_FOUND;
+
+// Check notes data existence
 if(!file_exists("data/notes/$live_id.json"))
 {
 	echo "Notes data for live_difficulty_id = $live_id doesn't exist!";
@@ -55,10 +61,7 @@ $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`
 		case 1:
 		{
 			if(!user_is_enough_lp($USER_ID, $temp['capital_value']))
-			{
-				echo 'Not enough LP!';
-				return false;
-			}
+				return ERROR_CODE_LIVE_NOT_ENOUGH_CURRENT_ENERGY;
 			
 			//user_sub_lp($USER_ID, $needed_lp);
 			break;
@@ -82,10 +85,7 @@ $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`
 				$current_token = $user_event_info['current_token'];
 			
 			if($current_token < $needed_token)
-			{
-				echo 'Not enough token!';
-				return false;
-			}
+				return ERROR_CODE_LIVE_NOT_ENOUGH_TOKEN;
 			
 			//$DATABASE->execute_query("UPDATE `{$ev['event_ranking_table']}` SET current_token = current_token - $needed_token WHERE user_id = $USER_ID");
 			break;

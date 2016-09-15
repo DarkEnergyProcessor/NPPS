@@ -83,7 +83,7 @@ $file_list = json_decode(file_get_contents("dlc/$filename_list"), true);
 
 foreach($file_list as $z => $x)
 	$download_out[] = [
-		'download_additional_id' => $z,
+		'download_additional_id' => ($pkg_id << 3) | $pkg_type,	// pseudo-download_additional_id. Hopefully fixes the "not downloading" bug.
 		'url' => $_SERVER['HTTP_HOST']."/dlc/download.php?os={$os_ver}&type={$pkg_type}&id={$pkg_id}&index=$z",
 		'size' => filesize("dlc/cache/$x")
 	];
