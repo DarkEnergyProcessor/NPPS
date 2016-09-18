@@ -9,7 +9,7 @@ $party_list_out = [];
 $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`');
 
 // verify live existence
-if(live_search($USER_ID, $live_difficulty_id) == false)
+if(live_search($USER_ID, $live_id) == false)
 	return ERROR_CODE_LIVE_NOT_FOUND;
 
 // verify live cost

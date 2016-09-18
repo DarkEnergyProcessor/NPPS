@@ -111,6 +111,78 @@ function npps_separate(string $delimiter, string $str): array
 	return [];
 }
 
+final class npps_nested_transaction
+{
+	private $nested_count = 0;
+	
+	private function __construct()
+	{
+		$this->nested_count = 0;
+	}
+	
+	public function __destruct()
+	{
+		if($this->nested_count > 0)
+		{
+			npps_query('COMMIT');
+			throw Exception('Unbalanced nested transaction');
+		}
+	}
+	
+	public function begin()
+	{
+		if($this->nested_count == 0)
+			npps_query('BEGIN');
+		
+		$this->nested_count++;
+	}
+	
+	public function commit()
+	{
+		if($this->nested_count == 0)
+			throw Exception('Unbalanced nested transaction');
+		if($this->nested_count == 1)
+			npps_query('COMMIT');
+		
+		$this->nested_count--;
+	}
+	
+	public function commit_force()
+	{
+		if($nested_count > 0)
+		{
+			npps_query('COMMIT');
+			$nested_count = 0;
+		}
+	}
+	
+	public static function instance()
+	{
+		static $x = NULL;
+		
+		if($x === NULL)
+			$x = new npps_nested_transaction();
+		
+		return $x;
+	}
+};
+
+function npps_begin_transaction()
+{
+	npps_nested_transaction::instance()->begin();
+}
+
+function npps_end_transaction()
+{
+	npps_nested_transaction::instance()->commit();
+}
+
+function npps_commit_transaction()
+{
+	npps_nested_transaction::instance()->commit_force();
+}
+
+
 require('modules/include.card.php');
 require('modules/include.deck.php');
 require('modules/include.item.php');

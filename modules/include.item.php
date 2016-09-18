@@ -84,7 +84,7 @@ function item_add_present_box(int $user_id, int $item_id, array $item_data = [],
 {
 	global $DATABASE;
 	
-	$present_table = $DATABASE->execute_query("SELECT present_table FROM `users` WHERE user_id = $user_id")[0][0];
+	$present_table = npps_query("SELECT present_table FROM `users` WHERE user_id = $user_id")[0][0];
 	$data = [
 		$item_id,
 		$info_id,
@@ -93,8 +93,8 @@ function item_add_present_box(int $user_id, int $item_id, array $item_data = [],
 		$item_data['expire'] ?? NULL
 	];
 	
-	$DATABASE->execute_query("INSERT INTO `$present_table` (item_type, card_num, amount, message, expire) VALUES (?, ?, ?, ?, ?)", 'iiisi', $data);
-	return $DATABASE->execute_query('SELECT LAST_INSERT_ID()')[0][0];
+	npps_query("INSERT INTO `$present_table` (item_type, card_num, amount, message, expire) VALUES (?, ?, ?, ?, ?)", 'iiisi', $data);
+	return npps_query('SELECT LAST_INSERT_ID()')[0][0];
 }
 
 function item_default_expiration(int $item_id, int $info_id = NULL)
@@ -120,7 +120,7 @@ function item_collect(int $user_id, int $add_type, int $item_additional_id, int 
 {
 	global $DATABASE;
 	
-	$unit_table_max = $DATABASE->execute_query("SELECT unit_table, max_unit FROM `users` WHERE user_id = $user_id")[0];
+	$unit_table_max = npps_query("SELECT unit_table, max_unit FROM `users` WHERE user_id = $user_id")[0];
 	$unit_table = $unit_table_max['unit_table'];
 	$max_unit = $unit_table_max['max_unit'];
 
@@ -134,7 +134,7 @@ function item_collect(int $user_id, int $add_type, int $item_additional_id, int 
 				case 1:
 				{
 					// scouting ticket
-					$DATABASE->execute_query("UPDATE `users` SET scouting_ticket = scouting_ticket + $amount WHERE user_id = $user_id");
+					npps_query("UPDATE `users` SET scouting_ticket = scouting_ticket + $amount WHERE user_id = $user_id");
 					return true;
 				}
 				case 2:
@@ -152,7 +152,7 @@ function item_collect(int $user_id, int $add_type, int $item_additional_id, int 
 				case 5:
 				{
 					// scouting coupon
-					$DATABASE->execute_query("UPDATE `users` SET scouting_coupon = scouting_coupon + $amount WHERE user_id = $user_id");
+					npps_query("UPDATE `users` SET scouting_coupon = scouting_coupon + $amount WHERE user_id = $user_id");
 					return true;
 				}
 				default: return false;
@@ -161,37 +161,37 @@ function item_collect(int $user_id, int $add_type, int $item_additional_id, int 
 		case 1001:
 		{
 			// club members
-			$current_members = $DATABASE->execute_query("SELECT COUNT(unit_id) FROM `$unit_table`")[0][0];
+			$current_members = npps_query("SELECT COUNT(unit_id) FROM `$unit_table`")[0][0];
 			$added_members = [];
 			
 			if($current_members + $amount > $max_unit)
 				return false;
 			
-			$DATABASE->execute_query('BEGIN');
+			npps_begin_transaction();
 			
 			for($i = 0; $i < $amount; $i++)
 				$added_members[] = card_add_direct($user_id, $item_additional_id);
 			
-			$DATABASE->execute_query('COMMIT');
+			npps_end_transaction();
 			
 			return $added_members;
 		}
 		case 3000:
 		{
 			collect_gold:
-			$DATABASE->execute_query("UPDATE `users` SET gold = gold + $amount WHERE user_id = $user_id");
+			npps_query("UPDATE `users` SET gold = gold + $amount WHERE user_id = $user_id");
 			return true;
 		}
 		case 3001:
 		{
 			collect_loveca:
-			$DATABASE->execute_query("UPDATE `users` SET free_loveca = free_loveca + $amount WHERE user_id = $user_id");
+			npps_query("UPDATE `users` SET free_loveca = free_loveca + $amount WHERE user_id = $user_id");
 			return true;
 		}
 		case 3002:
 		{
 			collect_friend_points:
-			$DATABASE->execute_query("UPDATE `users` SET friend_point = friend_point + $amount WHERE user_id = $user_id");
+			npps_query("UPDATE `users` SET friend_point = friend_point + $amount WHERE user_id = $user_id");
 			return true;
 		}
 		// TODO: add more

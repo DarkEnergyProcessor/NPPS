@@ -63,6 +63,7 @@ function live_get_current_daily(): array
 /* Search for live show and returns true if it can be played. */
 function live_search(int $user_id, int $live_difficulty_id): bool
 {
+	global $UNIX_TIMESTAMP;
 	$live_table = npps_query("SELECT live_table FROM `users` WHERE user_id = $user_id")[0]['live_table'];
 	
 	// 1. Search user unlocked live shows!
@@ -85,7 +86,7 @@ function live_search(int $user_id, int $live_difficulty_id): bool
 <<<QUERY
 		SELECT easy_song_list, normal_song_list, hard_song_list, expert_song_list FROM `event_list`
 			WHERE event_start <= $UNIX_TIMESTAMP AND event_end > $UNIX_TIMESTAMP AND token_image IS NOT NULL
-QUERY;
+QUERY
 		) as $event_data)
 	{
 		$easylist = npps_separate(',', $event_data['easy_song_list']);
