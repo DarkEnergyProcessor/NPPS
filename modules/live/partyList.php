@@ -31,6 +31,12 @@ if(live_search($USER_ID, $live_id) == false)
 	$live_is_random = $temp['random_flag'];
 	$live_x4_points = $temp['special_setting'];
 	
+	if(live_notes_exist($live_setting_id) == false)
+	{
+		echo "Notes data for live_setting_id = $live_setting_id not found!";
+		return ERROR_CODE_LIVE_NOT_FOUND;	// notes data not found
+	}
+	
 	switch($temp['capital_type'])
 	{
 		case 1:

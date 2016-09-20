@@ -83,6 +83,34 @@ function npps_get_database(string $db_name = ''): DatabaseWrapper
 	}
 }
 
+function npps_attach_database(DatabaseWrapper $db, string $another_db, string ...$db_list)
+{
+	static $attached_db = [];
+	
+	if($db == $GLOBALS['DATABASE'])
+		return;	// attach impossible; SQL-specific
+	
+	$string_representation = $db->__toString();
+	
+	if(isset($attached_db[$string_representation]) == false)
+		$attached_db[$string_representation] = [];
+	
+	if(isset($attached_db[$string_representation][$another_db]) == false)
+	{
+		$re = str_replace('/', '_', $another_db);
+		$attached_db[$string_representation][$another_db] = $db->execute_query("ATTACH DATABASE `data/$another_db.db_` as $re");
+	}
+	
+	foreach($db_list as $name)
+	{
+		if(isset($attached_db[$string_representation][$name]) == false)
+		{
+			$re = str_replace('/', '_', $name);
+			$attached_db[$string_representation][$name] = $db->execute_query("ATTACH DATABASE `data/$name.db_` as $re");
+		}
+	}
+}
+
 function npps_query(string $query, string $list = NULL, ...$arglist)
 {
 	$DATABASE = $GLOBALS['DATABASE'];

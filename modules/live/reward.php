@@ -416,11 +416,13 @@ $next_level_info_data = [];
 }
 
 // transform score rank and combo rank
+/*
 if($live_score_rank < 5)
 	$live_score_rank = 5 - $live_score_rank;
 
 if($live_combo_rank > 0)
 	$live_combo_rank = 5 - $live_combo_rank;
+*/
 
 // Calculate event points
 // Source: http://decaf.kouhi.me/lovelive/index.php?title=Gameplay#New_events_.28after_June_5.2C_2016.29

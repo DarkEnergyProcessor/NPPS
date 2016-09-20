@@ -1,7 +1,7 @@
 Null-Pointer Private Server
-==========================================
+===========================
 
-This is currentmy most flexible private server (I think) ever created.
+This is currently most flexible private server (I think) ever created.
 
 The private server code is written entirely from stratch, without using any framework.
 
@@ -24,5 +24,3 @@ The private server code is written entirely from stratch, without using any fram
 ###Some Notes
 
 * You don't need to do special preparation. Just clone, install necessary requirements above, create web server with document root set to this directory, and visit.
-
-* Hosting it under Linux is recommended and will gain 2x more speed than hosting it under Windows.

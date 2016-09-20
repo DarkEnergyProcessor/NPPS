@@ -103,3 +103,90 @@ QUERY
 	// Not found.
 	return false;
 }
+
+/* returns live_setting_id from live_difficulty_id or 0 if not found*/
+function live_setting_id(int $live_difficulty_id): int
+{
+	$live_db = npps_get_database('live');
+	npps_attach_database($live_db, 'event/battle', 'event/festival', 'event/marathon');
+	
+	$result = $live_db->execute_query(<<<QUERY
+		SELECT live_setting_id FROM (
+			SELECT live_difficulty_id, live_setting_id FROM `normal_live_m` UNION
+			SELECT live_difficulty_id, live_setting_id FROM `special_live_m` UNION
+			SELECT live_difficulty_id, live_setting_id FROM `event_battle_live_m` UNION
+			SELECT live_difficulty_id, live_setting_id FROM `event_festival_live_m` UNION
+			SELECT live_difficulty_id, live_setting_id FROM `event_marathon_live_m`
+		) WHERE live_difficulty_id = $live_difficulty_id
+QUERY
+	);
+	
+	if(count($result) == 0)
+		return 0;
+	
+	return $result[0]['live_setting_id'];
+}
+
+function live_notes_exist(int $live_setting_id)
+{
+	$note_name = sprintf('Live_s%04d', $live_setting_id);
+	
+	if(file_exists("data/notes/$note_name.note"))
+		return true;
+	
+	$db = npps_get_database('notes/notes');
+	
+	if(count($db->execute_query("SELECT rootpage FROM `sqlite_master` WHERE type = 'table' AND name = '$note_name'")) > 0)
+		return true;
+	
+	return false;
+}
+
+/* load notes array data from notes file or NULL if can't open notes file */
+function live_load_notes(int $live_setting_id)
+{
+	$note_name = sprintf('Live_s%04d', $live_setting_id);
+	$filename = "data/notes/$note_name.note";
+	$notes_data = [];
+	
+	if(file_exists($filename) == false)
+	{
+		if(file_exists('data/notes/notes.db_'))
+		{
+			$db = npps_get_database('notes/notes');
+			
+			if(count($db->execute_query("SELECT rootpage FROM `sqlite_master` WHERE type = 'table' AND name = '$note_name'")) > 0)
+			{
+				foreach($db->execute_query("SELECT * FROM `$note_name` ORDER BY timing_sec") as $note)
+					$notes_data[] = [
+						'timing_sec' => $note['timing_sec'],
+						'notes_attribute' => $note['notes_attribute'],
+						'notes_level' => 1,
+						'effect' => $note['effect'],
+						'effect_value' => $note['effect_value'] ?? 2,
+						'position' => $note['position']
+					];
+			}
+			else
+				return NULL;
+		}
+		else
+			return NULL;
+	}
+	else
+	{
+		$db = new SQLite3Database($filename);
+		
+		foreach($db->execute_query("SELECT * FROM `notes_list` ORDER BY timing_sec") as $note)
+			$notes_data[] = [
+				'timing_sec' => $note['timing_sec'],
+				'notes_attribute' => $note['notes_attribute'],
+				'notes_level' => 1,
+				'effect' => $note['effect'],
+				'effect_value' => $note['effect_value'] ?? 2,
+				'position' => $note['position']
+			];
+	}
+	
+	return $notes_data;
+}

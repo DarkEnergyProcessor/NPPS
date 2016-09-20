@@ -10,25 +10,16 @@ if($live_id == 0 || $deck_id == 0 || $party_user_id == 0)
 }
 
 // Only 1 live show can be done at time
-if(count($DATABASE->execute_query("SELECT live_id FROM `wip_live` WHERE user_id = $USER_ID")) > 0)
+if(count(npps_query("SELECT live_id FROM `wip_live` WHERE user_id = $USER_ID")) > 0)
 {
 	echo 'Another live is in progress!';
 	return false;
 }
 
 // verify live existence
-if(live_search($USER_ID, $live_difficulty_id) == false)
+if(live_search($USER_ID, $live_id) == false)
 	return ERROR_CODE_LIVE_NOT_FOUND;
 
-// Check notes data existence
-if(!file_exists("data/notes/$live_id.json"))
-{
-	echo "Notes data for live_difficulty_id = $live_id doesn't exist!";
-	http_response_code(500);
-	return false;
-}
-
-$live_notes = json_decode(file_get_contents("data/notes/$live_id.json"), true);
 $live_db = npps_get_database('live');
 $live_setting_id = 0;
 $needed_lp = 0;
@@ -36,14 +27,19 @@ $needed_token = 0;
 $live_is_random = 0;
 $live_x4_points = 0;
 
-$live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`');
+npps_attach_database($live_db, 'event/battle', 'event/festival', 'event/marathon');
 
 {
-	$temp = $live_db->execute_query("SELECT live_setting_id, capital_type, capital_value, random_flag, special_setting FROM (
-		SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, 0 as random_flag, 0 as special_setting FROM `normal_live_m` UNION
-		SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, 0 as random_flag, 0 as special_setting FROM `special_live_m` UNION
-		SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, random_flag, special_setting FROM `event_marathon_live_m`
-		) WHERE live_difficulty_id = $live_id");
+	$temp = $live_db->execute_query(<<<QUERY
+		SELECT live_setting_id, capital_type, capital_value, random_flag, special_setting FROM
+		(
+			SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, 0 as random_flag, 0 as special_setting FROM `normal_live_m` UNION
+			SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, 0 as random_flag, 0 as special_setting FROM `special_live_m` UNION
+			SELECT live_difficulty_id, live_setting_id, capital_type, capital_value, random_flag, special_setting FROM `event_marathon_live_m`
+		)
+		WHERE live_difficulty_id = $live_id
+QUERY
+	);
 	
 	if(count($temp) == 0)
 	{
@@ -70,7 +66,7 @@ $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`
 		{
 			$current_token = 0;
 			$needed_token = $temp['capital_value'];
-			$ev = $DATABASE->execute_query("SELECT event_ranking_table FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP");
+			$ev = npps_query("SELECT event_ranking_table FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP");
 			
 			// get current token
 			if(count($ev) == 0)
@@ -79,7 +75,7 @@ $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`
 				return false;
 			}
 			
-			$user_event_info = $DATABASE->execute_query("SELECT current_token FROM `{$ev['event_ranking_table']}` WHERE user_id = $USER_ID");
+			$user_event_info = npps_query("SELECT current_token FROM `{$ev['event_ranking_table']}` WHERE user_id = $USER_ID");
 			
 			if(count($user_event_info) > 0)
 				$current_token = $user_event_info['current_token'];
@@ -87,19 +83,26 @@ $live_db->execute_query('ATTACH DATABASE `data/event/marathon.db_` AS `marathon`
 			if($current_token < $needed_token)
 				return ERROR_CODE_LIVE_NOT_ENOUGH_TOKEN;
 			
-			//$DATABASE->execute_query("UPDATE `{$ev['event_ranking_table']}` SET current_token = current_token - $needed_token WHERE user_id = $USER_ID");
+			//npps_query("UPDATE `{$ev['event_ranking_table']}` SET current_token = current_token - $needed_token WHERE user_id = $USER_ID");
 			break;
 		}
 	}
 }
 
-$live_info = $live_db->execute_query("SELECT stage_level, notes_speed, c_rank_score, b_rank_score, a_rank_score, s_rank_score FROM `live_setting_m` WHERE live_setting_id = $live_setting_id")[0];
+if(live_notes_exist($live_setting_id) == false)
+{
+	echo "Notes data for live_setting_id = $live_setting_id not found!";
+	http_response_code(500);
+	return false;
+}
 
+$live_notes = live_load_notes($live_setting_id);
+$live_info = $live_db->execute_query("SELECT stage_level, notes_speed, c_rank_score, b_rank_score, a_rank_score, s_rank_score FROM `live_setting_m` WHERE live_setting_id = $live_setting_id")[0];
 $lp_info = [];
 
 {
 	// Get LP
-	$temp = $DATABASE->execute_query("SELECT full_lp_recharge, overflow_lp, max_lp FROM `users` WHERE user_id = $USER_ID")[0];
+	$temp = npps_query("SELECT full_lp_recharge, overflow_lp, max_lp FROM `users` WHERE user_id = $USER_ID")[0];
 	$lp_time_charge = $temp[0] - $UNIX_TIMESTAMP;
 	$total_lp = intdiv($lp_time_charge, 360);
 	
@@ -116,7 +119,7 @@ $lp_info = [];
 }
 
 // Get first marathon event
-$active_event = $DATABASE->execute_query("SELECT event_id FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_end > $UNIX_TIMESTAMP ORDER BY event_start LIMIT 1");
+$active_event = npps_query("SELECT event_id FROM `event_list` WHERE token_image IS NOT NULL AND event_start <= $UNIX_TIMESTAMP AND event_end > $UNIX_TIMESTAMP ORDER BY event_start LIMIT 1");
 
 if(count($active_event) > 0)
 	$active_event = $active_event[0][0];
@@ -124,7 +127,7 @@ else
 	$active_event = NULL;
 
 // Add to wip_live
-$DATABASE->execute_query("INSERT INTO `wip_live` (user_id, live_id, deck_num, guest_user_id, started) VALUES(?, ?, ?, ?, $UNIX_TIMESTAMP)", 'iiii',
+npps_query("INSERT INTO `wip_live` (user_id, live_id, deck_num, guest_user_id, started) VALUES(?, ?, ?, ?, $UNIX_TIMESTAMP)", 'iiii',
 	$USER_ID,
 	$live_id,
 	$deck_id,

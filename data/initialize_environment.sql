@@ -188,6 +188,11 @@ CREATE TABLE `secretbox_gauge` (
 	user_id INTEGER NOT NULL PRIMARY KEY,
 	gauge INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE `user_notice` (
+	user_id INTEGER NOT NULL PRIMARY KEY,
+	title TEXT,
+	contents TEXT
+);
 /*
 You may want to add 4 users in your list first so that you can Live Show!
 Table definition above is necessary for the server. Now the user-specific MySQL structure

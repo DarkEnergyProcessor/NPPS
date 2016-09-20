@@ -55,6 +55,7 @@ abstract class DatabaseWrapper
 {
 	/* The db handle. Can be handle to MySQL connection or SQLite database file */
 	protected $db_handle;
+	protected $db_id;
 	
 	abstract function __construct();
 	
@@ -68,6 +69,9 @@ abstract class DatabaseWrapper
 	/* values can be single value of array that contain everything or can be passed */
 	/* as function argument. If there's multiple SELECT, only the first result are returned */
 	abstract public function execute_query(string $query, string $types = NULL, ...$values);
+	
+	/* Returns string representation of this database wrapper */
+	abstract public function __toString();
 	
 	/* Create custom ordering SQL string */
 	public function custom_ordering(string $field_name, ...$order): string
@@ -92,6 +96,8 @@ abstract class DatabaseWrapper
 		$out[] = "ELSE $max_len END";
 		return implode(' ', $out);
 	}
+	
+
 	
 	/* Closes the database handle */
 	function __destruct() {}
@@ -252,6 +258,11 @@ class MySQLDatabase extends DatabaseWrapper
 		}
 	}
 	
+	public function __toString(): string
+	{
+		return 'DatabaseWrapper: Main MySQL';
+	}
+	
 	public function __destruct()
 	{
 		$this->db_handle->close();
@@ -274,6 +285,7 @@ class SQLite3Database extends DatabaseWrapper
 		{
 			$dbname = $filename;
 			$this->custom_filename = true;
+			$this->db_id = random_int(0, 2147483647);
 		}
 		
 		$this->db_handle = new SQLite3($dbname, $custom_filename ? SQLITE3_OPEN_READONLY : (SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE));
@@ -391,7 +403,15 @@ class SQLite3Database extends DatabaseWrapper
 		}
 	}
 	
-	function __destruct()
+	public function __toString(): string
+	{
+		if($this->custom_filename)
+			return "DatabaseWrapper: SQLite3 {$this->db_id}";
+		else
+			return "DatabaseWrapper: Main SQLite3";
+	}
+	
+	public function __destruct()
 	{
 		$this->db_handle->close();
 	}
@@ -401,4 +421,3 @@ if(defined("DBWRAPPER_USE_MYSQL"))
 	return new MySQLDatabase();
 else
 	return new SQLite3Database();
-?>
