@@ -7,6 +7,12 @@ if(!isset($REQUEST_DATA["login_key"]) || !isset($REQUEST_DATA["login_passwd"]))
 	return false;
 }
 
+if(token_exist($TOKEN) == false)
+{
+	echo 'Invalid token';
+	return false;
+}
+
 if(isset($INVITE_CODE))
 	$new_invite_code = $INVITE_CODE;
 

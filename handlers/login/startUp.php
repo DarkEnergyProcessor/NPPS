@@ -5,6 +5,12 @@ if(!isset($REQUEST_DATA["login_key"]) || !isset($REQUEST_DATA["login_passwd"]))
 	return false;
 }
 
+if(token_exist($TOKEN) == false)
+{
+	echo 'Invalid token';
+	return false;
+}
+
 $user_id = user_create($REQUEST_DATA["login_key"], $REQUEST_DATA["login_passwd"]);
 
 if($user_id == 0)

@@ -6,6 +6,12 @@ if(!isset($REQUEST_DATA["login_key"]) || !isset($REQUEST_DATA["login_passwd"]))
 	return false;
 }
 
+if(token_exist($TOKEN) == false)
+{
+	echo 'Invalid token';
+	return false;
+}
+
 /* Ok, let's find links */
 $connected_user_id = user_id_from_credentials($REQUEST_DATA["login_key"], $REQUEST_DATA["login_passwd"], $TOKEN);
 
@@ -21,37 +27,40 @@ else if($connected_user_id < 0)
 {
 	/* Account is banned! */
 	http_response_code(423);
-	header("HTTP/1.1 423 Account Banned");
+	header("HTTP/1.1 423 Locked");
 	return false;
 }
 
-$DATABASE->execute_query('BEGIN');
+npps_begin_transaction();
 
 /* Create new token again */
 $newtoken = token_generate();
 $USER_ID = $connected_user_id;
 
 /* Delete previous token */
-$DATABASE->execute_query('DELETE FROM `logged_in` WHERE login_key = ? AND login_pwd = ?', 'ss', $REQUEST_DATA["login_key"], $REQUEST_DATA["login_passwd"]);
+npps_query('DELETE FROM `logged_in` WHERE login_key = ? AND login_pwd = ?', 'ss', $REQUEST_DATA['login_key'], $REQUEST_DATA['login_passwd']);
 
 /* Delete all WIP lives */
-$DATABASE->execute_query("DELETE FROM `wip_live` WHERE user_id = $connected_user_id");
+npps_query("DELETE FROM `wip_live` WHERE user_id = $connected_user_id");
+
+/* Delete all WIP scenario */
+npps_query("DELETE FROM `wip_scenario` WHERE user_id = $connected_user_id");
 
 /* Update */
-$DATABASE->execute_query('UPDATE `logged_in` SET login_key = ?, login_pwd = ?, token = ? WHERE token = ?', 'ssss', 
-	$REQUEST_DATA["login_key"], $REQUEST_DATA["login_passwd"], $newtoken, $TOKEN);
+npps_query('UPDATE `logged_in` SET login_key = ?, login_pwd = ?, token = ? WHERE token = ?', 'ssss', 
+	$REQUEST_DATA['login_key'], $REQUEST_DATA['login_passwd'], $newtoken, $TOKEN);
 
 $TOKEN = $newtoken;
 
-$DATABASE->execute_query('COMMIT');
+npps_end_transaction();
 
 /* Out. The JSON string will be in-order atleast in PHP7 */
 return [
 	[
-		"authorize_token" => $newtoken,
-		"user_id" => $connected_user_id,
-		"review_version" => "",
-		"server_timestamp" => $UNIX_TIMESTAMP
+		'authorize_token' => $newtoken,
+		'user_id' => $connected_user_id,
+		'review_version' => '',
+		'server_timestamp' => $UNIX_TIMESTAMP
 	],
 	200
 ];
