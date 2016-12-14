@@ -300,8 +300,16 @@ class SQLite3Database extends DatabaseWrapper
 		if($this->custom_filename)
 			throw new Exception('Cannot initialize environment when opening another DB file');
 		
-		if(file_exists(".sqlite3_initialized"))
-			return;
+		{
+			$result = $this->db_handle->query('SELECT name FROM `sqlite_master` WHERE tbl_name = "initialized"');
+			$has_result = false;
+			
+			while($row = $result->fetchArray())
+				$has_result = true;
+			
+			if($has_result)
+				return;
+		}
 		
 		fclose(fopen(DBWRAPPER_MYSQL_DB.'.db', 'w'));
 		
@@ -313,7 +321,7 @@ class SQLite3Database extends DatabaseWrapper
 		
 		common_initialize_environment($this);
 		
-		touch(".sqlite3_initialized");
+		$this->db_handle->exec('CREATE TABLE `initialized` (a, b)');
 	}
 	
 	public function execute_query(string $query, string $types = NULL, ...$values)

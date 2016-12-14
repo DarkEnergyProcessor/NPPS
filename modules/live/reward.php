@@ -335,7 +335,7 @@ $unlocked_subscenario = [];
 	}
 	
 	// now calculate
-	$center_bond = intdiv($remaining_bond * 7, 10);
+	$center_bond = intdiv($remaining_bond * 5, 10);
 	$remaining_bond -= $center_bond;
 	
 	// add to leader

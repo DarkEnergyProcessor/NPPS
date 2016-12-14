@@ -33,7 +33,7 @@ $get_stage_level = function(int $live_id, SQLite3Database $event_common_db = NUL
 };
 
 // Event songs.
-foreach($DATABASE->execute_query("SELECT * FROM `event_list` WHERE event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP") as $ev)
+foreach(npps_query("SELECT * FROM `event_list` WHERE event_start <= $UNIX_TIMESTAMP AND event_close > $UNIX_TIMESTAMP") as $ev)
 {
 	$event_info = $event_common_db->execute_query("SELECT event_category_id, name, banner_asset_name, banner_se_asset_name, result_banner_asset_name FROM `event_m` WHERE event_id = {$ev['event_id']}")[0];
 	$event_list[] = [
@@ -73,7 +73,7 @@ foreach($DATABASE->execute_query("SELECT * FROM `event_list` WHERE event_start <
 }
 
 // B-side songs
-foreach($DATABASE->execute_query("SELECT * FROM `b_side_schedule` WHERE end_available_time > $UNIX_TIMESTAMP AND start_available_time < $UNIX_TIMESTAMP") as $v)
+foreach(npps_query("SELECT * FROM `b_side_schedule` WHERE end_available_time > $UNIX_TIMESTAMP AND start_available_time < $UNIX_TIMESTAMP") as $v)
 {
 	$stage_level = $get_stage_level($v[0]);
 	

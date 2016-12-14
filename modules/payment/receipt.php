@@ -21,16 +21,18 @@ $DATABASE->execute_query("UPDATE `users` SET paid_loveca = paid_loveca + $loveca
 
 return [
 	[
-		'apple_product_id' => "com.klab.lovelive.en.loveGem{$product_id_matches[1]}",
-		'google_product_id' => "com.klab.lovelive.en.loveGem{$product_id_matches[1]}",
-		'name' => "$loveca_count Love Gems",
-		'price' => 100,
-		'price_tier' => strval($price_tier[$loveca_count] ?? '50'),
-		'sns_coin' => $loveca_count,
-		'insert_date' => '2013/10/24 21:16:00',
-		'update_date' => '2013/10/24 21:16:00',
-		'product_id' => "com.klab.lovelive.en.loveGem{$product_id_matches[1]}"
+		'status' => [],
+		'product' => [
+			'apple_product_id' => "com.klab.lovelive.en.loveGem{$product_id_matches[1]}",
+			'google_product_id' => "com.klab.lovelive.en.loveGem{$product_id_matches[1]}",
+			'name' => "$loveca_count Love Gems",
+			'price' => 100,
+			'price_tier' => strval($price_tier[$loveca_count] ?? '50'),
+			'sns_coin' => $loveca_count,
+			'insert_date' => '2013/10/24 21:16:00',
+			'update_date' => '2013/10/24 21:16:00',
+			'product_id' => "com.klab.lovelive.en.loveGem{$product_id_matches[1]}"
+		]
 	],
 	200
 ];
-?>

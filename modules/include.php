@@ -210,7 +210,6 @@ function npps_commit_transaction()
 	npps_nested_transaction::instance()->commit_force();
 }
 
-
 require('modules/include.card.php');
 require('modules/include.deck.php');
 require('modules/include.item.php');
