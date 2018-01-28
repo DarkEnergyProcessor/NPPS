@@ -1,8 +1,8 @@
 <?php
 /*
- * SIF Private server
+ * Null-Pointer Private Server
  * Do most preparation before handling SIF requests
- * Copyright © 2037 Dark Energy Processor Corporation
+ * Copyright © 2039 Dark Energy Processor Corporation
  */
 
 /** @@ Configuration @@ **/
@@ -21,7 +21,7 @@ define('APPLICATION_ID', '834030294');
 // Expected client version before issuing "Starting Download". Comment to disable
 // If the major version (the 7 or the 3) is modified, it will issue version update instead.
 // Wildcard is allowed (and Server-Version default to *.*.0 if major-version is lower or higher
-define('EXPECTED_CLIENT', "7.3.65");
+define('EXPECTED_CLIENT', "7.3.*");
 
 // Enable request logging to database. Comment to disable
 //define("REQUEST_LOGGING", true);
@@ -190,7 +190,7 @@ define('ERROR_CODE_INVALID_PLATFORM_HANDOVER',					6004);
 /** !! SIF Error Codes !! **/
 
 define('MAIN_INVOKED', true, true);
-define('X_MESSAGE_CODE', '');
+define('X_MESSAGE_CODE', 'liumangtuzi');
 
 /* Hopefully nginx fix. Source: http://www.php.net/manual/en/function.getallheaders.php#84262 */
 if(!function_exists('getallheaders'))
@@ -242,7 +242,7 @@ $HANDLER_SHUTDOWN = function()
 	header(sprintf("Date: %s", gmdate('D, d M Y H:i:s T')));
 	
 	$contents = ob_get_contents();
-	error_log($contents, 4);
+	error_log($contents, 0);
 	
 	if(!defined('DEBUG_ENVIRONMENT'))
 		$contents = "";
@@ -468,11 +468,16 @@ function authorize_function($authorize)
 		parse_str($authorize, $new_assemble);
 		
 		/* Check the authorize string */
+		/*
 		if(
 			(isset($new_assemble["consumerKey"]) && strcmp($new_assemble["consumerKey"], CONSUMER_KEY) == 0) &&
 			(isset($new_assemble["version"]) && strcmp($new_assemble["version"], "1.1") == 0) &&
 			isset($new_assemble["nonce"]) &&
 			isset($new_assemble["timeStamp"])
+		)
+		*/
+		if(
+			(isset($new_assemble["consumerKey"]) && strcmp($new_assemble["consumerKey"], CONSUMER_KEY) == 0)
 		)
 			return $new_assemble;
 		
@@ -522,7 +527,7 @@ if(!defined("WEBVIEW"))
 		/* Check the authorize */
 		if(isset($REQUEST_HEADERS["authorize"]))
 			$AUTHORIZE_DATA = authorize_function($REQUEST_HEADERS["authorize"]);
-		if($AUTHORIZE_DATA === false)
+		if(!$AUTHORIZE_DATA)
 		{
 			echo "Authorize header needed!";
 			exit;
@@ -530,11 +535,13 @@ if(!defined("WEBVIEW"))
 		$TOKEN = retval_null($AUTHORIZE_DATA["token"]);
 		
 		/* Check the bundle version */
+		/*
 		if(!isset($REQUEST_HEADERS["bundle-version"]))
 		{
 			echo "Bundle-Version header needed!";
 			exit;
 		}
+		*/
 		
 		/* Check if client-version is OK */
 		if(isset($REQUEST_HEADERS["client-version"]))
@@ -602,7 +609,7 @@ if(!defined("WEBVIEW"))
 		
 		/* Call handler. Parameters: bundle-version, user_id, token, os, platform-id, os-version, time-zone = "unknown", module = "api", action = NULL */
 		$REQUEST_SUCCESS = $MAIN_SCRIPT_HANDLER(
-			$REQUEST_HEADERS["bundle-version"],
+			'',
 			$USER_ID,
 			$TOKEN,
 			$REQUEST_HEADERS["os"] ?? "unknown",
@@ -624,7 +631,7 @@ if(!defined("WEBVIEW"))
 			foreach($AUTHORIZE_DATA as $k => $v)
 				$new_authorize[$k] = $v;
 			
-			$new_authorize["requestTimeStamp"] = $new_authorize["timeStamp"];
+			$new_authorize["requestTimeStamp"] = $new_authorize["timeStamp"] ?? time();
 			$new_authorize["timeStamp"] = time();
 			$new_authorize["user_id"] = $USER_ID > 0 ? $USER_ID : "";
 			

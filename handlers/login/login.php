@@ -17,7 +17,7 @@ $connected_user_id = user_id_from_credentials($REQUEST_DATA["login_key"], $REQUE
 
 if($connected_user_id == 0)
 	/* No user ID found or login incorrect */
-	return ERROR_CODE_LOGIN_INVALID;
+	return 407;
 else if($connected_user_id < 0)
 {
 	/* Account is banned! */
